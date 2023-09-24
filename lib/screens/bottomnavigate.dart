@@ -5,7 +5,9 @@ import 'package:plantbackend/screens/Products.dart';
 import 'package:plantbackend/screens/cart.dart';
 import 'package:plantbackend/screens/costumanimatedbottom.dart';
 import 'package:plantbackend/screens/fertilizers.dart';
+import 'package:plantbackend/screens/payment.dart';
 import 'package:plantbackend/screens/plants.dart';
+import 'package:plantbackend/screens/profile.dart';
 import 'package:plantbackend/screens/soil.dart';
 import 'package:plantbackend/screens/tools.dart';
 import 'package:plantbackend/screens/wishlist.dart';
@@ -53,22 +55,36 @@ class _BottomNavigationState extends State<BottomNavigation> {
     },
     child: Container(
       color: Colors.lightGreen[50],
-      height: 75,
+      height: 73,
+
       padding: EdgeInsets.all(10),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(50),
+        borderRadius: BorderRadius.circular(60),
         child: CurvedNavigationBar(
-            height: 50,
+            height:50,
+
             backgroundColor: Color(0xFF3C593B) ,
             color:Color(0xFF2F482D) ,
-            buttonBackgroundColor: Colors.black12,
+            //buttonBackgroundColor: Colors.black12,
             onTap: (index) => setState(() => _currentIndex = index),
             //selectedIndex: _currentIndex,
             items: <Widget>[
-              Icon(Icons.home,color: Colors.white,size: 27,),
-              Icon(Icons.favorite_border_outlined,color: Colors.white,size:27,),
-              Icon(Icons.shopping_cart,color: Colors.white,size:27,),
-              Icon(Icons.person,color: Colors.white,size:27,)
+              Align(
+                alignment: Alignment.center,
+                child: Icon(Icons.home, color: Colors.white, size: 25),
+              ),
+              Align(
+                alignment: Alignment.center,
+                child: Icon(Icons.favorite_border_outlined, color: Colors.white, size: 25),
+              ),
+              Align(
+                alignment: Alignment.center,
+                child: Icon(Icons.shopping_cart, color: Colors.white, size: 25),
+              ),
+              Align(
+                alignment: Alignment.center,
+                child: Icon(Icons.person, color: Colors.white, size: 25),
+              ),
             ]),
 
       ),
@@ -100,7 +116,8 @@ class _BottomNavigationState extends State<BottomNavigation> {
       // ),
     HomePage(),
     WishList(),
-    ShoppingCart(),
+    ShoppingCart(quant: 1),
+    Profile(),
     //Products(),
 
         //child:Navigator.pushNamed(context,MaterialPageRoute(builder: (context)=>FavoritesPage(favorites: List.empty())));

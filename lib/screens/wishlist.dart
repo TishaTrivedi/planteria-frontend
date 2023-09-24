@@ -15,102 +15,98 @@ class WishList extends StatefulWidget {
 }
 
 class _WishListState extends State<WishList> {
-  final HttpLink httpLink = HttpLink('http://192.168.1.112:8000/graphql');
-
-  late GraphQLClient client;
-  bool isLiked = true;
-
-  void _toggleLike() {
-    setState(() {
-      isLiked = !isLiked;
-    });
-  }
-  Map<String, bool> productLikedStates = {};
+  bool productRemoved=false;
+              final HttpLink httpLink = HttpLink('http://192.168.1.112:8000/graphql/');
+              late GraphQLClient client;
 
 
-  void initState() {
-    super.initState();
-    client = GraphQLClient(
-      link: httpLink,
-      cache: GraphQLCache(),
-
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container( 
-        child: Scaffold(
-          backgroundColor: Colors.lightGreen.shade50,
-          appBar: AppBar(
-            backgroundColor: Color(0xFF3C593B),
-            title: Text("My WishList",
-              style: GoogleFonts.lora(
-                fontWeight: FontWeight.w600,
-              ),),
-            leading: Icon(Icons.arrow_back),
-            shadowColor: Color(0xFF2F482D),
-          ),
-          body: Query(
-            options: QueryOptions(
-              document: gql('''
-              query {
-                displayCustomerLikedPlantsById(customerId: 1) {
-                  id
-                  plantId {
-                    plantName
-                    category
-                    price
-                    images
-                  }
-                }
-                displayCustomerLikedProductsById(customerId: 1) {
-                  id
-                  productId {
-                    productName
-                    price
-                    images
-                  }
-                }
+              void initState() {
+                super.initState();
+                client = GraphQLClient(
+                  link: httpLink,
+                  cache: GraphQLCache(),
+                );
               }
-            '''),
-            ),
-            builder: (QueryResult result, {fetchMore, refetch}) {
-              if (result.hasException) {
-                return Center(
-                  child: Text(
-                    'Error fetching data: ${result.exception.toString()}',
+
+              @override
+              Widget build(BuildContext context) {
+                return DefaultTabController(
+                  length: 2, // Number of tabs (Plants and Products)
+                  child: Scaffold(
+                    backgroundColor: Colors.lightGreen.shade50,
+                    appBar: AppBar(
+                      backgroundColor: Color(0xFF3C593B),
+                      title: Text(
+                        "My WishList",
+                        style: GoogleFonts.lora(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      leading: Icon(Icons.arrow_back),
+                      shadowColor: Color(0xFF2F482D),
+                      bottom: TabBar(
+                        tabs: [
+                          Tab(text: 'Plants'), // First tab for Plants
+                          Tab(text: 'Products'), // Second tab for Products
+                        ],
+                      ),
+                    ),
+                    body: TabBarView(
+                        children: [
+                    // Content for the Plants tab
+                    Query(
+                    options: QueryOptions(
+                    document: gql('''
+                              query {
+                                displayCustomerLikedPlantsById(customerId: 1) {
+                                  id
+                                  plantId {
+                                    id
+                                    plantName
+                                    category
+                                    price
+                                    images
+                                  }
+                                }
+                              }
+                            '''),
                   ),
-                );
-              }
+                  builder: (QueryResult result, {fetchMore, refetch}) {
+                    if (result.hasException) {
+                      return Center(
+                        child: Text(
+                          'Error fetching data: ${result.exception.toString()}',
+                        ),
+                      );
+                    }
 
-              if (result.isLoading) {
-                return Center(
-                  child: CircularProgressIndicator(),
-                );
-              }
+                    if (result.isLoading) {
+                      return Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    }
+                    Map<String, bool> plantLikedStates = {};
+                    final likedPlants =
+                    result.data?['displayCustomerLikedPlantsById'] as List;
 
-              final likedPlants =
-              result.data?['displayCustomerLikedPlantsById'] as List;
-              final likedProducts =
-              result.data?['displayCustomerLikedProductsById'] as List;
+                    return GridView.builder(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        childAspectRatio: 0.95,
+                    ),
+                    padding: EdgeInsets.all(0),
+                    scrollDirection: Axis.vertical,
+                    itemCount: likedPlants.length,
+                    itemBuilder: (context, index) {
+                      final plant = likedPlants[index]['plantId'];
+                      final plantName = plant['plantName'] ?? 'No Name';
+                      final imageUrl =
+                          "http://192.168.1.112:8000/media/${plant['images']}";
+                      final price = '₹' + (plant['price'] ?? 'N/A').toString();
+                      final category = plant['category'] ?? 'N/A';
+                      bool isLiked=false;
 
-              return GridView.builder(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.95,
-                ),
-                padding: EdgeInsets.only(left: 0, right: 0, top: 0),
-                scrollDirection: Axis.vertical,
-                itemCount: likedPlants.length + likedProducts.length,
-                itemBuilder: (context, index) {
-                  if (index < likedPlants.length) {
-                    final plant = likedPlants[index]['plantId'];
-                    final plantName = plant['plantName'] ?? 'No Name';
-                    final imageUrl =
-                        "http://192.168.1.112:8000/media/${plant['images']}";
-                    final price = '₹' + (plant['price'] ?? 'N/A').toString();
-                    final category = plant['category'] ?? 'N/A';
+
 
                     return Container(
                       width: 210,
@@ -170,7 +166,53 @@ class _WishListState extends State<WishList> {
                           clipBehavior: Clip.antiAlias,
                           decoration: BoxDecoration(color: Colors.black.withOpacity(0)),
                           child: IconButton(
-                            onPressed: (){},
+                            onPressed: () async {
+                              final addProductToCartMutation = gql('''
+                                          mutation AddToCart(\$plantId: ID!, \$quantity: Int!) {
+                                            addToCart(customerId: 1, itemId: \$plantId, itemType: "plant", quantity: \$quantity) {
+                                              savedProduct {
+                                                id
+                                                # Add other fields you want to retrieve
+                                              }
+                                            }
+                                          }
+                                        ''');
+
+                              try {
+                                final result = await client.mutate(
+                                  MutationOptions(
+                                    document: addProductToCartMutation,
+                                    variables: {
+                                      'plantId': plant['id'],
+                                      'quantity': 1, // Specify the quantity you want to add to the cart
+                                    },
+                                  ),
+                                );
+                                if (result.hasException) {
+                                  // Handle the error here.
+                                  print('Error: ${result.exception.toString()}');
+                                  // You can also show an error message to the user.
+                                } else {
+                                  // Product added to cart successfully.
+                                  // You can update the UI or show a confirmation message.
+                                  print('Plant added to cart.');
+                                  setState(() {
+                                    productRemoved = true;
+                                  });
+                                  //print('Item removed from cart successfully.');
+                                  // Show a Snackbar with the success message
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Plant added to cart.'),
+                                      duration: Duration(seconds: 2), // You can adjust the duration
+                                    ),
+                                  );
+                                }
+                              } catch (error) {
+                                // Handle any unexpected errors here.
+                                print('Unexpected error: $error');
+                              }
+                            },
                             icon: Icon(Icons.shopping_cart),
                             color:Colors.white.withOpacity(0.7400000095367432),
                           ),
@@ -247,71 +289,63 @@ class _WishListState extends State<WishList> {
                               color: Colors.black.withOpacity(
                                   0)),
                           child: IconButton(
+
                             icon: Icon(
                               Icons.favorite,
-                              color: isLiked ? Colors.red : Colors.white,
+                              color: plantLikedStates[plant] ?? true? Colors.red : Colors.white,
                             ),
-          //                   onPressed: () async {
-          //                     if (isLiked) {
-          //                       // If it's liked, remove it from the wishlist
-          //                       final result = await client.mutate(
-          //                         MutationOptions(
-          //                           document: gql('''
-          //   mutation RemoveFromWishlist(\$plantId: ID!) {
-          //     removeProductFromWishlist(plantId: \$plantId) {
-          //       id
-          //       # Add other fields you need
-          //     }
-          //   }
-          // '''),
-          //                           variables: {
-          //                             'plantId': plantId,
-          //                           },
-          //                         ),
-          //                       );
-          //
-          //                       if (result.hasException) {
-          //                         // Handle any errors that occur during the mutation
-          //                         print('Error removing from wishlist: ${result.exception.toString()}');
-          //                       } else {
-          //                         // Mutation was successful, remove the plant from the UI
-          //                         setState(() {
-          //                           // Remove the plant from your Likedplants list
-          //                           Likedplants.removeWhere((item) => item['plantId']['id'] == plantId);
-          //                         });
-          //                       }
-          //                     } else {
-          //                       // If it's not liked, add it to the wishlist (similar to your existing code)
-          //                       final result = await client.mutate(
-          //                         MutationOptions(
-          //                           document: gql('''
-          //   mutation AddToWishlist(\$plantId: ID!) {
-          //     addProductToWishlist(plantId: \$plantId) {
-          //       id
-          //       # Add other fields you need
-          //     }
-          //   }
-          // '''),
-          //                           variables: {
-          //                             'plantId': plantId,
-          //                           },
-          //                         ),
-          //                       );
-          //
-          //                       if (result.hasException) {
-          //                         // Handle any errors that occur during the mutation
-          //                         print('Error adding to wishlist: ${result.exception.toString()}');
-          //                       } else {
-          //                         // Mutation was successful, update the like status locally
-          //                         setState(() {
-          //                           isLiked = !isLiked;
-          //                         });
-          //                         print("Removed successfully");
-          //                       }
-          //                     }
-          //                   },
-                            onPressed: (){},
-                            color: Colors.white,
+                            onPressed: () async {
+                              // If it's liked, remove it from the wishlist
+                              final plantId = plant['id'];
+
+                      // Check if the product is liked or not
+                      final isLiked = plantLikedStates[plantId] ?? true;
+
+                      if (isLiked) {
+                      // If the product is liked, remove it from the wishlist
+                      if (plantId != null) { // Add this null check
+                      final result = await client.mutate(
+                      MutationOptions(
+                      document: gql('''
+                         mutation removePlantsFromWishlist(\$customerId: ID!, \$plantId: ID!) {
+                          removePlantsFromWishlist(customerId: \$customerId, plantId: \$plantId) {
+                          deletedCount
+                                                  }
+                                                }
+                                              '''),
+                      variables: {
+                      'customerId': 1, // Replace with the actual customer ID.
+                      'plantId': plantId,
+                      },
+                      ),
+                      );
+
+                      if (result.hasException) {
+                      print('Error removing from wishlist: ${result.exception.toString()}');
+                      } else {
+                      setState(() {
+                      plantLikedStates[plantId] = false;
+                      print("Removed successfully");
+                      setState(() {
+                        productRemoved = true;
+                      });
+                      //print('Item removed from cart successfully.');
+                      // Show a Snackbar with the success message
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Removed from wishlist successfully.'),
+                          duration: Duration(seconds: 2), // You can adjust the duration
+                        ),
+                      );
+                      });
+                      }
+                      }
+                      } else {
+                      print("Product is not liked, no action taken.");
+                      }
+                      },
+                      color: Colors.grey,
+
                           ),
 
                         ),),
@@ -332,16 +366,67 @@ class _WishListState extends State<WishList> {
 
                     ],
                   )));
+                      },
+                      );
+                    },
+                  ),
+                    Query(
+                    options: QueryOptions(
+                    document: gql('''
+                                  query {
+                                    displayCustomerLikedProductsById(customerId: 1) {
+                                      id
+                                      productId {
+                                      id
+                                        productName
+                                        price
+                                        images
+                                      }
+                                    }
+                                  }
+                                '''),
+                    ),
+                    builder: (QueryResult result, {fetchMore, refetch}) {
+                    if (result.hasException) {
+                    return Center(
+                    child: Text(
+                    'Error fetching data: ${result.exception.toString()}',
+                    ),
+                    );
+                    }
 
-
-                  } else {
-                    final product = likedProducts[index - likedPlants.length]
-                    ['productId'];
-                    final productId=product['id']?? 'No id';
+                    if (result.isLoading) {
+                    return Center(
+                    child: CircularProgressIndicator(),
+                    );
+                    }
+                    Map<String, bool> productLikedStates = {};
+                    final likedProducts =
+                    result.data?['displayCustomerLikedProductsById'] as List;
+                    print(result);
+                    // likedProducts.forEach((product) {
+                    //   final productId = product['productId']['id'];
+                    //   productLikedStates[productId] = true;
+                    // });
+                    return GridView.builder(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.95,
+                    ),
+                    padding: EdgeInsets.all(0),
+                    scrollDirection: Axis.vertical,
+                    itemCount: likedProducts.length,
+                    itemBuilder: (context, index) {
+                    final product = likedProducts[index]['productId'];
+                    //final productId=product['id']?? 'No id';
                     final productName = product['productName'] ?? 'No Name';
                     final imageUrl =
-                        "http://192.168.1.112:8000/media/${product['images']}";
+                    "http://192.168.1.112:8000/media/${product['images']}";
                     final price = '₹' + (product['price'] ?? 'N/A').toString();
+                    //print(productId);
+                   // bool isLiked = false;
+
+
 
                     return Container(
                       width: 210,
@@ -401,7 +486,55 @@ class _WishListState extends State<WishList> {
                                 clipBehavior: Clip.antiAlias,
                                 decoration: BoxDecoration(color: Colors.black.withOpacity(0)),
                                 child: IconButton(
-                                  onPressed: (){},
+                                  onPressed: () async {
+                                    final addProductToCartMutation = gql('''
+                                          mutation AddToCart(\$productId: ID!, \$quantity: Int!) {
+                                            addToCart(customerId: 1, itemId: \$productId, itemType: "product", quantity: \$quantity) {
+                                              savedProduct {
+                                                id
+                                                # Add other fields you want to retrieve
+                                              }
+                                            }
+                                          }
+                                        ''');
+
+                                    try {
+                                      final result = await client.mutate(
+                                        MutationOptions(
+                                          document: addProductToCartMutation,
+                                          variables: {
+                                            'productId': product['id'],
+                                            'quantity':1, // Specify the quantity you want to add to the cart
+                                          },
+                                        ),
+                                      );
+
+                                      if (result.hasException) {
+                                        // Handle the error here.
+                                        print('Error: ${result.exception.toString()}');
+                                        // You can also show an error message to the user.
+                                      } else {
+                                        // Product added to cart successfully.
+                                        // You can update the UI or show a confirmation message.
+
+                                        print('Product added to cart.');
+                                        setState(() {
+                                          productRemoved = true;
+                                        });
+                                        //print('Item removed from cart successfully.');
+                                        // Show a Snackbar with the success message
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text('Product Added to cart successfully.'),
+                                            duration: Duration(seconds: 2), // You can adjust the duration
+                                          ),
+                                        );
+                                      }
+                                    } catch (error) {
+                                      // Handle any unexpected errors here.
+                                      print('Unexpected error: $error');
+                                    }
+                                  },
                                   icon: Icon(Icons.shopping_cart),
                                   color:Colors.white.withOpacity(0.7400000095367432),
                                 ),
@@ -465,7 +598,9 @@ class _WishListState extends State<WishList> {
                                 child:IconButton(
                                   icon: Icon(
                                     Icons.favorite,
-                                    color: productLikedStates[product['id']] ?? true ? Colors.red : Colors.grey.withOpacity(0.5),
+                                    color: productLikedStates[product['id']] ?? true
+                                        ? Colors.red
+                                        : Colors.grey.withOpacity(0.5),
                                   ),
                                   onPressed: () async {
                                     final productId = product['id'];
@@ -473,18 +608,18 @@ class _WishListState extends State<WishList> {
                                     // Check if the product is liked or not
                                     final isLiked = productLikedStates[productId] ?? true;
 
-                                    // If the product is liked, remove it from the wishlist
                                     if (isLiked) {
-                                      try {
+                                      // If the product is liked, remove it from the wishlist
+                                      if (productId != null) { // Add this null check
                                         final result = await client.mutate(
                                           MutationOptions(
                                             document: gql('''
-              mutation removeProductsFromWishlist(\$customerId: ID!, \$productId: ID!) {
-                removeProductsFromWishlist(customerId: \$customerId, productId: \$productId) {
-                  deletedCount
-                }
-              }
-            '''),
+                                                mutation removeProductsFromWishlist(\$customerId: ID!, \$productId: ID!) {
+                                                  removeProductsFromWishlist(customerId: \$customerId, productId: \$productId) {
+                                                    deletedCount
+                                                  }
+                                                }
+                                              '''),
                                             variables: {
                                               'customerId': 1, // Replace with the actual customer ID.
                                               'productId': productId,
@@ -498,20 +633,25 @@ class _WishListState extends State<WishList> {
                                           setState(() {
                                             productLikedStates[productId] = false;
                                             print("Removed successfully");
+                                            setState(() {
+                                              productRemoved = true;
+                                            });
+                                            //print('Item removed from cart successfully.');
+                                            // Show a Snackbar with the success message
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Text('Removed from wishlist successfully.'),
+                                                duration: Duration(seconds: 2), // You can adjust the duration
+                                              ),
+                                            );
                                           });
                                         }
-                                      } catch (e) {
-                                        print('Error executing the mutation: $e');
                                       }
                                     } else {
-                                      // If the product is not liked, you can handle it differently here,
-                                      // such as showing a message or taking other actions.
                                       print("Product is not liked, no action taken.");
                                     }
                                   },
-                                  color: Colors.grey,
-                                )
-                              )),
+                                  color: Colors.grey,))),
 
                                 Positioned(
                               left: 71,
@@ -531,19 +671,13 @@ class _WishListState extends State<WishList> {
                           ],
                         )));
 
-
-                  }
-                },
-              );
-            },
-          ),
-        ),
-    );
-  }
+                    },
+                    );
+                    },
+                    ),
+                        ],
+                    ),
+                  ),
+                );
+              }
 }
-
-
-
-
-
-

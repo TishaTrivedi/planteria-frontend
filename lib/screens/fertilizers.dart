@@ -30,9 +30,11 @@ class _FertilizersState extends State<Fertilizers> with SingleTickerProviderStat
 
   }
 
-  final HttpLink httpLink = HttpLink('http://192.168.1.112:8000/graphql');
+  final HttpLink httpLink = HttpLink('http://192.168.1.112:8000/graphql/');
 
   late GraphQLClient client;
+  Map<String, bool> plantLikedStates = {};
+
 
   final String fetchPlantQuery = r'''
     query($id: ID!) {
@@ -84,302 +86,378 @@ class _FertilizersState extends State<Fertilizers> with SingleTickerProviderStat
       child: Scaffold(
         backgroundColor: Colors.lightGreen.shade50,
           body: Query(
-      options: QueryOptions(
-      document: gql(fetchPlantQuery),
-        variables: {'id': widget.plantId,} // Replace with the actual plant ID
-    ),
-    builder: (QueryResult result, {fetchMore, refetch}) {
-    if (result.hasException) {
-    return Center(
-    child: Text(
-    'Error fetching plants: ${result.exception.toString()}',
-    ),
-    );
-    }
-
-    if (result.isLoading) {
-    return Center(
-    child: CircularProgressIndicator(),
-    );
-    }
-
-    final Map<String, dynamic> plants = result.data?['plantsById'];
-    return SingleChildScrollView(
-    child: Container(
-    width: 371,
-    height: 1201,
-    color: Colors.lightGreen.shade50,
-    child: Stack(
-    children: [
-
-    Positioned(
-    left: -152,
-    top: -45,
-    child: Container(
-    width: 722,
-    height: 2000,
-    child: Stack(
-    children: [
-      Positioned(
-          left: 180,
-          top: 750,
-          child: Container(
-            width: 350,
-            height: 500,
-            padding: EdgeInsets.only(right: 40),
-
-            child:Center(
-              child:Text(
-                "•	The image displayed is indicative in nature.\n•	Actual product may vary in shape or design as per the availability.\n•	The number of leaves and the size of the plant depends on seasonal availability.\n•	Since flowers are seasonal in nature, flowering plants may be delivered without the bloom. Flowers, if present in plant, may be in fully bloomed, semi-bloomed or bud stage.\n•	Pots will be provided as per the requirement of the plant.\n•	Delivery will be attempted on the same day, but there may be a delay of 3-5 hours depending on the traffic and the weather.\n•	Our courier partners do not call prior to delivering an order, so we recommend that you provide an address at which someone will be present to receive the package.\n•	The delivery, once dispatched, cannot be redirected to any other address.",
-                style: GoogleFonts.playfairDisplay(
-                  color: Colors.black,
-                  fontSize: 13,
-                  // fontFamily: 'Playfair Display',
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
+              options: QueryOptions(
+              document: gql(fetchPlantQuery),
+                variables: {'id': widget.plantId,} // Replace with the actual plant ID
             ),
-          )),
-    Positioned(
-    left: 260.67,
-    top: 370.79,
-    child: SizedBox(
-    width: 230.22,
-    height: 100.03,
-    child: Text(
-    plants['plantName'],
-    style: GoogleFonts.playfairDisplay(
-    color: Colors.black,
-    fontSize: 25,
-    fontWeight: FontWeight.w500,
-    ),
-    ),
-    ),
-    ),
-    Positioned(
-    left: 290.67,
-    top: 425.79,
-    child: SizedBox(
-    width: 270.22,
-    height: 60.03,
-    child: Text(
-    plants['subcategory'],
-    style: GoogleFonts.playfairDisplay(
-    color: Colors.black45,
-    fontSize: 22,
-    fontWeight: FontWeight.w400,
-    ),
-    ),
-    ),
-    ),
-    Positioned(
-    left: 0,
-    top: 0,
-    child: Container(
-    width: 96.85,
-    height: 97.24,
-    decoration: BoxDecoration(color: Color(0xFFD9D9D9)),
-    ),
-    ),
-    Positioned(
-    left: 176.27,
-    top: 298.96,
-    child: SizedBox(
-    width: 120.10,
-    height: 31.12,
-    child: Text(
-    '₹' + plants['price']
-        .toString(),
-    style: GoogleFonts.acme(
-    color: Colors.black.withOpacity(0.6600000262260437),
-    fontSize: 16,
-    fontWeight: FontWeight.w500,
-    ),
-    ),
-    ),
-    ),
-    Positioned(
-    left: 177.24,
-    top: 234.48,
-    child: SizedBox(
-    width: 120.10,
-    height: 31.12,
-    child: Text(
-    plants['family'],
-    style: GoogleFonts.acme(
-    color: Colors.black.withOpacity(0.6600000262260437),
-    fontSize: 16,
-    fontWeight: FontWeight.w500,
-    ),
-    ),
-    ),
-    ),
-    Positioned(
-    left: 178.21,
-    top: 179.33,
-    child: SizedBox(
-    width: 120.10,
-    height: 31.12,
-    child: Text(
-    plants['size'],
-    style: GoogleFonts.acme(
-    color: Colors.black.withOpacity(0.6600000262260437),
-    fontSize: 16,
-    fontWeight: FontWeight.w500,
-    ),
-    ),
-    ),
-    ),
-    Positioned(
-    left: 320.59,
-    top: 89.05,
-    child: SlideAnimation(
-    duration: Duration(seconds:1),
-    child: Container(
-    width: 188.62,
-    height: 286.84,
-    decoration: BoxDecoration(
-    image: DecorationImage(
-    image: NetworkImage("http://192.168.1.112:8000/media/${plants['images']}"),
-    fit: BoxFit.fill,
-    ),
-    ),
-    ),
-    ),
-    ),
-    Positioned(
-    left: 177.24,
-    top: 272.68,
-    child: SizedBox(
-    width: 105.57,
-    height: 41.81,
-    child: Text(
-    'Price\n',
-    style: GoogleFonts.playfairDisplay(
-    color: Colors.black,
-    fontSize: 24,
-    fontWeight: FontWeight.w700,
-    ),
-    ),
-    ),
-    ),
-    Positioned(
-    left: 177.24,
-    top: 206.56,
-    child: SizedBox(
-    width: 105.57,
-    height: 37.92,
-    child: Text(
-    'Family\n',
-    style: GoogleFonts.playfairDisplay(
-    color: Colors.black,
-    fontSize: 24,
-    fontWeight: FontWeight.w700,
-    ),
-    ),
-    ),
-    ),
-    Positioned(
-    left: 177.24,
-    top: 151.41,
-    child: SizedBox(
-    width: 105.57,
-    height: 37.92,
-    child: Text(
-    'Size',
-    style: GoogleFonts.playfairDisplay(
-    color: Colors.black,
-    fontSize: 24,
-    fontWeight: FontWeight.w700,
-    ),
-    ),
-    ),
-    ),
-    Positioned(
-    top: 100,
-    left: 167.24,
-    child: IconButton(
-    icon:Icon(
-    isLiked ? Icons.favorite : Icons.favorite_border,
-    color: isLiked ? Colors.red.shade600 : null, // Set the color to red if it's liked
-    ),
-    onPressed: _toggleLike,)),
+            builder: (QueryResult result, {fetchMore, refetch}) {
+            if (result.hasException) {
+            return Center(
+            child: Text(
+            'Error fetching plants: ${result.exception.toString()}',
+            ),
+            );
+            }
 
-    // TabView
-    Positioned(
-    left: 176,
-    top: 450,
-    right: 0,
-    bottom: 0,
-    child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-    SizedBox(
-    height: 10,
-    ),
-    FractionallySizedBox(
-    widthFactor: 0.5,
+            if (result.isLoading) {
+            return Center(
+            child: CircularProgressIndicator(),
+            );
+            }
 
-    child:TabBar(
-    controller: _tabController,
-    physics: AlwaysScrollableScrollPhysics(),
-    // padding: EdgeInsets.only(left: 20),
-    indicatorColor: Colors.black12,
-    labelStyle: GoogleFonts.acme(
-    color: Colors.black
+            final Map<String, dynamic> plants = result.data?['plantsById'];
+            return SingleChildScrollView(
+            child: Container(
+            width: 371,
+            height: 1201,
+            color: Colors.lightGreen.shade50,
+            child: Stack(
+            children: [
+
+            Positioned(
+            left: -152,
+            top: -45,
+            child: Container(
+            width: 722,
+            height: 2000,
+            child: Stack(
+            children: [
+              Positioned(
+                  left: 180,
+                  top: 750,
+                  child: Container(
+                    width: 350,
+                    height: 500,
+                    padding: EdgeInsets.only(right: 40),
+
+                    child:Center(
+                      child:Text(
+                        "•	The image displayed is indicative in nature.\n•	Actual product may vary in shape or design as per the availability.\n•	The number of leaves and the size of the plant depends on seasonal availability.\n•	Since flowers are seasonal in nature, flowering plants may be delivered without the bloom. Flowers, if present in plant, may be in fully bloomed, semi-bloomed or bud stage.\n•	Pots will be provided as per the requirement of the plant.\n•	Delivery will be attempted on the same day, but there may be a delay of 3-5 hours depending on the traffic and the weather.\n•	Our courier partners do not call prior to delivering an order, so we recommend that you provide an address at which someone will be present to receive the package.\n•	The delivery, once dispatched, cannot be redirected to any other address.",
+                        style: GoogleFonts.playfairDisplay(
+                          color: Colors.black,
+                          fontSize: 13,
+                          // fontFamily: 'Playfair Display',
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ),
+                  )),
+            Positioned(
+            left: 260.67,
+            top: 370.79,
+            child: SizedBox(
+            width: 230.22,
+            height: 100.03,
+            child: Text(
+            plants['plantName'],
+            style: GoogleFonts.playfairDisplay(
+            color: Colors.black,
+            fontSize: 25,
+            fontWeight: FontWeight.w500,
+            ),
+            ),
+            ),
+            ),
+            Positioned(
+            left: 290.67,
+            top: 425.79,
+            child: SizedBox(
+            width: 270.22,
+            height: 60.03,
+            child: Text(
+            plants['subcategory'],
+            style: GoogleFonts.playfairDisplay(
+            color: Colors.black45,
+            fontSize: 22,
+            fontWeight: FontWeight.w400,
+            ),
+            ),
+            ),
+            ),
+            Positioned(
+            left: 0,
+            top: 0,
+            child: Container(
+            width: 96.85,
+            height: 97.24,
+            decoration: BoxDecoration(color: Color(0xFFD9D9D9)),
+            ),
+            ),
+            Positioned(
+            left: 176.27,
+            top: 298.96,
+            child: SizedBox(
+            width: 120.10,
+            height: 31.12,
+            child: Text(
+            '₹' + plants['price']
+                .toString(),
+            style: GoogleFonts.acme(
+            color: Colors.black.withOpacity(0.6600000262260437),
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            ),
+            ),
+            ),
+            ),
+            Positioned(
+            left: 177.24,
+            top: 234.48,
+            child: SizedBox(
+            width: 120.10,
+            height: 31.12,
+            child: Text(
+            plants['family'],
+            style: GoogleFonts.acme(
+            color: Colors.black.withOpacity(0.6600000262260437),
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            ),
+            ),
+            ),
+            ),
+            Positioned(
+            left: 178.21,
+            top: 179.33,
+            child: SizedBox(
+            width: 120.10,
+            height: 31.12,
+            child: Text(
+            plants['size'],
+            style: GoogleFonts.acme(
+            color: Colors.black.withOpacity(0.6600000262260437),
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            ),
+            ),
+            ),
+            ),
+            Positioned(
+            left: 320.59,
+            top: 89.05,
+            child: SlideAnimation(
+            duration: Duration(seconds:1),
+            child: Container(
+            width: 188.62,
+            height: 286.84,
+            decoration: BoxDecoration(
+            image: DecorationImage(
+            image: NetworkImage("http://192.168.1.112:8000/media/${plants['images']}"),
+            fit: BoxFit.fill,
+            ),
+            ),
+            ),
+            ),
+            ),
+            Positioned(
+            left: 177.24,
+            top: 272.68,
+            child: SizedBox(
+            width: 105.57,
+            height: 41.81,
+            child: Text(
+            'Price\n',
+            style: GoogleFonts.playfairDisplay(
+            color: Colors.black,
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+            ),
+            ),
+            ),
+            ),
+            Positioned(
+            left: 177.24,
+            top: 206.56,
+            child: SizedBox(
+            width: 105.57,
+            height: 37.92,
+            child: Text(
+            'Family\n',
+            style: GoogleFonts.playfairDisplay(
+            color: Colors.black,
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+            ),
+            ),
+            ),
+            ),
+            Positioned(
+            left: 177.24,
+            top: 151.41,
+            child: SizedBox(
+            width: 105.57,
+            height: 37.92,
+            child: Text(
+            'Size',
+            style: GoogleFonts.playfairDisplay(
+            color: Colors.black,
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+            ),
+            ),
+            ),
+            ),
+            Positioned(
+            top: 100,
+            left: 167.24,
+              child: IconButton(
+                icon: Icon(
+                  Icons.favorite_outlined,
+                  color: (plantLikedStates[plants['id']] ?? false) ? Colors.red : Colors.grey.withOpacity(0.5),
+                ),
+                  onPressed: () async {
+                    print('Plant ID: ${plants['id']}');
+                    final isLiked = plantLikedStates[plants['id']] ?? false;
+
+                    if (!isLiked) {
+                      // Add plant to the wishlist
+                      final result = await client.mutate(
+                        MutationOptions(
+                          document: gql('''
+          mutation AddToWishlist(\$plantId: ID!) {
+            addPlantsToWishlist(customerId: 1, plantId: \$plantId) {
+              savedPlant {
+                id
+              }
+            }
+          }
+        '''),
+                          variables: {
+                            'plantId': plants['id'],
+                          },
+                        ),
+                      );
+
+                      if (result.hasException) {
+                        print('Error adding to wishlist: ${result.exception.toString()}');
+                      } else {
+                        setState(() {
+                          // Toggle the liked state in the plantLikedStates map
+                          plantLikedStates[plants['id']] = true;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Plant added to wishlist successfully.'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        });
+                        print("Added successfully");
+                      }
+                    } else {
+                      // Remove plant from the wishlist
+                      final result = await client.mutate(
+                        MutationOptions(
+                          document: gql('''
+          mutation RemoveFromWishlist(\$plantId: ID!) {
+            removePlantsFromWishlist(customerId: 1, plantId: \$plantId) {
+              deletedCount
+            }
+          }
+        '''),
+                          variables: {
+                            'plantId': plants['id'],
+                          },
+                        ),
+                      );
+
+                      if (result.hasException) {
+                        print('Error removing from wishlist: ${result.exception.toString()}');
+                      } else {
+                        setState(() {
+                          // Toggle the liked state in the plantLikedStates map
+                          plantLikedStates[plants['id']] = false;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Plant removed from wishlist successfully.'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        });
+                        print("Removed successfully");
+                      }
+                    }
+                  },
+        // color: Colors.grey,
+
+      ),
     ),
-    labelColor: Colors.black,
-    unselectedLabelStyle:GoogleFonts.acme(
-    color: Colors.black
-    ),
-    unselectedLabelColor: Colors.black,
 
 
-    tabs: [
-    Tab(
-    child: SizedBox(
-    width: 100, // Expand the width to take half of the space
-    child: Center(
-    child: Text(
-    'Description',
-    textAlign: TextAlign.center,
-    ),
-    ),
-    ),
-    ),
-    // Custom layout for the second tab (Plant care)
-    Tab(
-    child: SizedBox(
-    width:100, // Expand the width to take half of the space
-    child: Center(
-    child: Text(
-    'Plant care',
-    textAlign: TextAlign.center,
-    ),
-    ),
-    ),
-    ),
+            // TabView
+            Positioned(
+            left: 176,
+            top: 450,
+            right: 0,
+            bottom: 0,
+            child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+            SizedBox(
+            height: 10,
+            ),
+            FractionallySizedBox(
+            widthFactor: 0.5,
+
+            child:TabBar(
+            controller: _tabController,
+            physics: AlwaysScrollableScrollPhysics(),
+            // padding: EdgeInsets.only(left: 20),
+            indicatorColor: Colors.black12,
+            labelStyle: GoogleFonts.acme(
+            color: Colors.black
+            ),
+            labelColor: Colors.black,
+            unselectedLabelStyle:GoogleFonts.acme(
+            color: Colors.black
+            ),
+            unselectedLabelColor: Colors.black,
 
 
-    ],
-    labelPadding: EdgeInsets.symmetric(horizontal:20),
-    ),),
-    SizedBox(
-    height: 10,
-    ),
-      Container(
-        height: 150,
-        width: 320,
-        child: Container(
-          width: 350,
-          height: 200,
+            tabs: [
+            Tab(
+            child: SizedBox(
+            width: 100, // Expand the width to take half of the space
+            child: Center(
+            child: Text(
+            'Description',
+            textAlign: TextAlign.center,
+            ),
+            ),
+            ),
+            ),
+            // Custom layout for the second tab (Plant care)
+            Tab(
+            child: SizedBox(
+            width:100, // Expand the width to take half of the space
+            child: Center(
+            child: Text(
+            'Plant care',
+            textAlign: TextAlign.center,
+            ),
+            ),
+            ),
+            ),
 
-          decoration: ShapeDecoration(
 
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
+            ],
+            labelPadding: EdgeInsets.symmetric(horizontal:20),
             ),),
-          child: TabBarView(
+            SizedBox(
+            height: 10,
+            ),
+              Container(
+                height: 150,
+                width: 320,
+                child: Container(
+                  width: 350,
+                  height: 200,
+
+                  decoration: ShapeDecoration(
+
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),),
+                  child: TabBarView(
               controller: _tabController,
               children: [
                 // Description Tab Content
@@ -829,61 +907,93 @@ class _FertilizersState extends State<Fertilizers> with SingleTickerProviderStat
           decoration: BoxDecoration(color: Colors.black.withOpacity(0)),
           ),
           ),
+
           Positioned(
-          left: 232,
-          top: 727,
-          child: Container(
-          width: 191.77,
-          height: 32.09,
-          decoration: ShapeDecoration(
-          color: Color(0xFF21411C),
-          shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-          ),
-          ),
-          ),
-          ),
-          Positioned(
-          left: 255,
+          left: 240,
           top: 727.68,
           child: SizedBox(
-          width: 165.95,
-          height: 26.46,
-          child: Row(
-          children: [
-          Icon(Icons.shopping_cart,
-          color: Colors.white,
-          size: 18,),
-          SizedBox(
-          width: 10,
-          ),
-          Text(
-          'Add To Cart',
-          style: GoogleFonts.playfairDisplay(
-          color: Colors.white,
-          fontSize: 20,
-          //fontFamily: 'Playfair Display',
-          fontWeight: FontWeight.w700,
-          ),
-          ),
-          ],
-          ),
-          ),
-          ),
-          Positioned(
-          left: 697.79,
-          top: 506.05,
-          child: Container(
-          width: 24.21,
-          height: 24.31,
+          width: 180.95,
+          height: 32.46,
+          child:ElevatedButton(
+              onPressed: () async {
+                final addProductToCartMutation = gql('''
+                 mutation AddToCart(\$plantId: ID!, \$quantity: Int!) {
+                 addToCart(customerId: 1, itemId: \$plantId, itemType: "plant", quantity: \$quantity) {
+                 savedProduct {
+                 id
+                 # Add other fields you want to retrieve
+                 }
+                }
+               }
+                                        ''');
 
-          clipBehavior: Clip.antiAlias,
-          decoration: ShapeDecoration(
-          color: Color(0xFF21411C),
-          shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
+                try {
+                  final result = await client.mutate(
+                    MutationOptions(
+                      document: addProductToCartMutation,
+                      variables: {
+                        'plantId': plants['id'],
+                        'quantity': quant, // Specify the quantity you want to add to the cart
+                      },
+                    ),
+                  );
+          if (result.hasException) {
+          // Handle the error here.
+          print('Error: ${result.exception.toString()}');
+          // You can also show an error message to the user.
+          } else {
+          // Product added to cart successfully.
+          // You can update the UI or show a confirmation message.
+          print('Plant added to cart.');
+          }
+          } catch (error) {
+          // Handle any unexpected errors here.
+          print('Unexpected error: $error');
+          }
+          },
+            child:Row(
+              children: [
+                Icon(Icons.shopping_cart,
+                  color: Colors.white,
+                  size: 18,),
+                SizedBox(
+                  width: 10,
+                ),
+                Text(
+                  'Add To Cart',
+                  style: GoogleFonts.playfairDisplay(
+                    color: Colors.white,
+                    fontSize: 20,
+                    //fontFamily: 'Playfair Display',
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ) ,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color(0xFF21411C),
+              minimumSize: Size(180.77,40),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+            ),
+          )
           ),
-          ),)),
+          ),
+          // Positioned(
+          // left: 697.79,
+          // top: 506.05,
+          // child: Container(
+          // width: 24.21,
+          // height: 24.31,
+          //
+          // clipBehavior: Clip.antiAlias,
+          // decoration: ShapeDecoration(
+          // color: Color(0xFF21411C),
+          // shape: RoundedRectangleBorder(
+          // borderRadius: BorderRadius.circular(24),
+          // ),
+          // ),)),
           ],
           ),
           ),

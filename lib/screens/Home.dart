@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:graphql/client.dart';
+import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:like_button/like_button.dart';
 import 'package:plantbackend/screens/Products.dart';
 import 'package:plantbackend/screens/soil.dart';
@@ -17,6 +18,11 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+
+  final HttpLink httpLink = HttpLink('http://192.168.1.112:8000/graphql');
+
+  late GraphQLClient client;
+
 
   final List<PlantsData> plantList =[
 
@@ -53,6 +59,11 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    client = GraphQLClient(
+      link: httpLink,
+      cache: GraphQLCache(),
+
+    );
     _timer = Timer.periodic(_duration, (Timer timer) {
       if (_currentPage < _numPages - 1) {
         _currentPage++;
@@ -280,499 +291,570 @@ class _HomePageState extends State<HomePage> {
             ),
             Container(
               height: 220,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: plantList.length,
-                itemBuilder: (context, index) {
-                  return Container(
-                    width: 130, // Adjust the width of each item as needed
-                    margin: EdgeInsets.symmetric(horizontal: 10),
-                    child: Stack(
-                      children: [
-                        Positioned(
-                          left: 131,
-                          top: 190,
-                          child: Transform(
-                            transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(-3.14),
-                            child: Container(
-                              width: 131,
-                              height: 166,
-                              decoration: ShapeDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment(0.00, -1.00),
-                                  end: Alignment(0, 1),
-                                  colors: [ Color(0xFF99A897),Color(0xFF50694C),Color(0xFF21411C)],
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(24),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          left: 12,
-                          top: 111,
-                          child: SizedBox(
-                            width: 147,
-                            height: 24,
-                            child: Text(
-                              plantList[index].plantName,
-                              style: GoogleFonts.playfairDisplay(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          left: 85,
-                          top: 145.34,
-                          child: Container(
-                            width: 35,
-                            height: 30.45,
-                            clipBehavior: Clip.antiAlias,
-                            decoration: BoxDecoration(color: Colors.black.withOpacity(0)),
-                            child: IconButton(
-                              onPressed: (){},
-                              icon: Icon(Icons.shopping_cart),
-                              color:Colors.white.withOpacity(0.7400000095367432),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          left: 13,
-                          top: 161,
-                          child: Container(
-                            width: 55.23,
-                            height: 18.57,
-                            child: Stack(
-                              children: [
-                                Positioned(
-                                  left: 0,
-                                  top: 0,
-                                  child: Container(
-                                    width: 55.23,
-                                    height: 18.57,
-                                    decoration: ShapeDecoration(
-                                      color: Colors.white.withOpacity(0.7099999785423279),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(24),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Positioned(
-                                  left: 3,
-                                  top: 0,
-                                  child: SizedBox(
-                                    width: 45,
-                                    height: 18,
-                                    child: Text(
-                                      '₹'+plantList[index].plantPrice,
-                                      textAlign: TextAlign.center,
-                                      style: GoogleFonts.acme(
-                                        color: Color(0xFF20401B),
-                                        fontSize: 15.50,
-                                        fontWeight: FontWeight.w400,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          left: 12,
-                          top: 135,
-                          child: SizedBox(
-                            width: 111,
-                            height: 22.51,
-                            child: Text(
-                              plantList[index].plantCategory,
-                              style: GoogleFonts.playfairDisplay(
-                                color: Colors.white.withOpacity(0.7400000095367432),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          left: 13,
-                          top: 40.31,
-                          child: Container(
-                            width: 40,
-                            height: 43.45,
-                            clipBehavior: Clip.antiAlias,
-                            decoration: BoxDecoration(color: Colors.black.withOpacity(0)),
-                              child: IconButton(
-                                  icon:Icon(
-                                    isLiked ? Icons.favorite : Icons.favorite_border,
-                                    color: isLiked ? Colors.red.shade600 : null, // Set the color to red if it's liked
-                                  ),
-                                  onPressed: _toggleLike,
-                                  color: Colors.white),
-                          ),
-                        ),
-                        Positioned(
-                          left: 61,
-                          top: 0,
-                          child: Container(
-                            width: 69,
-                            height: 115,
-                            decoration: BoxDecoration(
-                              image: DecorationImage(
-                                image: AssetImage(plantList[index].plantImage),
-                                fit: BoxFit.fill,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+              child:Query(
+              options: QueryOptions(
+              document: gql('''
+                        query{
+                        displayUserRecentlyViewed(customerId:1){
+                          plantId{
+                            plantName
+                            price
+                            images
+                            category
+                          }
+                          productId{
+                            productName
+                            price
+                            images
+                            mainCategory
+                          }
+                       
+                        }
+                      }
+                      '''),
+              ),
+              builder: (QueryResult result, {fetchMore, refetch}) {
+                if (result.hasException) {
+                  return Center(
+                    child: Text(
+                      'Error fetching data: ${result.exception.toString()}',
                     ),
                   );
-                },
-              ),
-            ),
-            Container(
-              padding: EdgeInsets.only(left:10),
-              alignment: Alignment.topLeft,
+                }
 
-              child: Text("Trending",
-                  style: GoogleFonts.playfairDisplay(
-                    color: Color(0xFF0D0D0D),
-                    fontSize: 20,
-
-                    fontWeight: FontWeight.w600,
-                  ),
-                  textAlign: TextAlign.left),
-
-
-            ),
-            Container(
-              height: 220,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: plantList.length,
-                itemBuilder: (context, index) {
-                  return Container(
-                    width: 130, // Adjust the width of each item as needed
-                    margin: EdgeInsets.symmetric(horizontal: 10),
-                    child: Stack(
-                      children: [
-                        Positioned(
-                          left: 131,
-                          top: 190,
-                          child: Transform(
-                            transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(-3.14),
-                            child: Container(
-                              width: 131,
-                              height: 166,
-                              decoration: ShapeDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment(0.00, -1.00),
-                                  end: Alignment(0, 1),
-                                  colors: [ Color(0xFF99A897),Color(0xFF50694C),Color(0xFF21411C)],
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(24),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          left: 12,
-                          top: 111,
-                          child: SizedBox(
-                            width: 147,
-                            height: 24,
-                            child: Text(
-                              plantList[index].plantName,
-                              style: GoogleFonts.playfairDisplay(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          left: 85,
-                          top: 145.34,
-                          child: Container(
-                            width: 35,
-                            height: 30.45,
-                            clipBehavior: Clip.antiAlias,
-                            decoration: BoxDecoration(color: Colors.black.withOpacity(0)),
-                            child: IconButton(
-                              onPressed: (){},
-                              icon: Icon(Icons.shopping_cart),
-                              color:Colors.white.withOpacity(0.7400000095367432),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          left: 13,
-                          top: 161,
-                          child: Container(
-                            width: 55.23,
-                            height: 18.57,
-                            child: Stack(
-                              children: [
-                                Positioned(
-                                  left: 0,
-                                  top: 0,
-                                  child: Container(
-                                    width: 55.23,
-                                    height: 18.57,
-                                    decoration: ShapeDecoration(
-                                      color: Colors.white.withOpacity(0.7099999785423279),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(24),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Positioned(
-                                  left: 3,
-                                  top: 0,
-                                  child: SizedBox(
-                                    width: 45,
-                                    height: 18,
-                                    child: Text(
-                                      '₹'+plantList[index].plantPrice,
-                                      textAlign: TextAlign.center,
-                                      style: GoogleFonts.acme(
-                                        color: Color(0xFF20401B),
-                                        fontSize: 15.50,
-                                        fontWeight: FontWeight.w400,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          left: 12,
-                          top: 135,
-                          child: SizedBox(
-                            width: 111,
-                            height: 22.51,
-                            child: Text(
-                              plantList[index].plantCategory,
-                              style: GoogleFonts.playfairDisplay(
-                                color: Colors.white.withOpacity(0.7400000095367432),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          left: 13,
-                          top: 40.31,
-                          child: Container(
-                            width: 40,
-                            height: 43.45,
-                            clipBehavior: Clip.antiAlias,
-                            decoration: BoxDecoration(color: Colors.black.withOpacity(0)),
-                            child: LikeButton(),
-                          ),
-                        ),
-                        Positioned(
-                          left: 61,
-                          top: 0,
-                          child: Container(
-                            width: 69,
-                            height: 115,
-                            decoration: BoxDecoration(
-                              image: DecorationImage(
-                                image: AssetImage(plantList[index].plantImage),
-                                fit: BoxFit.fill,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                if (result.isLoading) {
+                  return Center(
+                    child: CircularProgressIndicator(),
                   );
-                },
-              ),
-            ),
-            Container(
-              padding: EdgeInsets.only(left:10),
-              alignment: Alignment.topLeft,
-
-              child: Text("Recently Viewed",
-                  style: GoogleFonts.playfairDisplay(
-                    color: Color(0xFF0D0D0D),
-                    fontSize: 20,
-
-                    fontWeight: FontWeight.w600,
-                  ),
-                  textAlign: TextAlign.left),
-
-
-            ),
-        Container(
-          height: 220,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: plantList.length,
-            itemBuilder: (context, index) {
-              return Container(
-                width: 130, // Adjust the width of each item as needed
-                margin: EdgeInsets.symmetric(horizontal: 10),
-                child: Stack(
-                  children: [
-                    Positioned(
-                      left: 131,
-                      top: 190,
-                      child: Transform(
-                        transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(-3.14),
-                        child: Container(
-                          width: 131,
-                          height: 166,
-                          decoration: ShapeDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment(0.00, -1.00),
-                              end: Alignment(0, 1),
-                              colors: [ Color(0xFF99A897),Color(0xFF50694C),Color(0xFF21411C)],
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(24),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      left: 12,
-                      top: 111,
-                      child: SizedBox(
-                        width: 147,
-                        height: 24,
-                        child: Text(
-                          plantList[index].plantName,
-                          style: GoogleFonts.playfairDisplay(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      left: 85,
-                      top: 145.34,
-                      child: Container(
-                        width: 35,
-                        height: 30.45,
-                        clipBehavior: Clip.antiAlias,
-                        decoration: BoxDecoration(color: Colors.black.withOpacity(0)),
-                        child: IconButton(
-                          onPressed: (){},
-                          icon: Icon(Icons.shopping_cart),
-                          color:Colors.white.withOpacity(0.7400000095367432),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      left: 13,
-                      top: 161,
-                      child: Container(
-                        width: 55.23,
-                        height: 18.57,
+                }
+                final recentlyViewed =
+                result.data?['displayUserRecentlyViewed'] as List;
+                return ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: recentlyViewed.length,
+                    itemBuilder: (context, index) {
+                      final cartItem = recentlyViewed[index];
+                      final product = cartItem['productId'];
+                      final plant = cartItem['plantId'];
+                      //final quantity = cartItem['quantity'];
+                      String imageUrl;
+                      if (product != null) {
+                        imageUrl = "http://192.168.1.112:8000/media/${product['images']}";
+                      } else if (plant != null) {
+                        imageUrl = "http://192.168.1.112:8000/media/${plant['images']}";
+                      } else {
+                        imageUrl = "null"; // Handle the case where neither product nor plant is available
+                      }
+                      return Container(
+                        width: 130, // Adjust the width of each item as needed
+                        margin: EdgeInsets.symmetric(horizontal: 10),
                         child: Stack(
                           children: [
                             Positioned(
-                              left: 0,
-                              top: 0,
-                              child: Container(
-                                width: 55.23,
-                                height: 18.57,
-                                decoration: ShapeDecoration(
-                                  color: Colors.white.withOpacity(0.7099999785423279),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(24),
+                              left: 131,
+                              top: 190,
+                              child: Transform(
+                                transform: Matrix4.identity()
+                                  ..translate(0.0, 0.0)
+                                  ..rotateZ(-3.14),
+                                child: Container(
+                                  width: 131,
+                                  height: 166,
+                                  decoration: ShapeDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment(0.00, -1.00),
+                                      end: Alignment(0, 1),
+                                      colors: [
+                                        Color(0xFF99A897),
+                                        Color(0xFF50694C),
+                                        Color(0xFF21411C)
+                                      ],
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(24),
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
                             Positioned(
-                              left: 3,
-                              top: 0,
+                              left: 12,
+                              top: 111,
                               child: SizedBox(
-                                width: 45,
-                                height: 18,
+                                width: 147,
+                                height: 24,
                                 child: Text(
-                                  '₹'+plantList[index].plantPrice,
-                                  textAlign: TextAlign.center,
-                                  style: GoogleFonts.acme(
-                                    color: Color(0xFF20401B),
-                                    fontSize: 15.50,
+                                  product != null ? product['productName'] : plant['plantName'],
+                                  style: GoogleFonts.playfairDisplay(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              left: 85,
+                              top: 145.34,
+                              child: Container(
+                                width: 35,
+                                height: 30.45,
+                                clipBehavior: Clip.antiAlias,
+                                decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0)),
+                                child: IconButton(
+                                  onPressed: () {},
+                                  icon: Icon(Icons.shopping_cart),
+                                  color: Colors.white.withOpacity(
+                                      0.7400000095367432),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              left: 13,
+                              top: 161,
+                              child: Container(
+                                width: 55.23,
+                                height: 18.57,
+                                child: Stack(
+                                  children: [
+                                    Positioned(
+                                      left: 0,
+                                      top: 0,
+                                      child: Container(
+                                        width: 55.23,
+                                        height: 18.57,
+                                        decoration: ShapeDecoration(
+                                          color: Colors.white.withOpacity(
+                                              0.7099999785423279),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                                24),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      left: 3,
+                                      top: 0,
+                                      child: SizedBox(
+                                        width: 45,
+                                        height: 18,
+                                        child: Text(
+                                            '₹ '+(product != null ? product['price'].toString() : plant['price'].toString()),
+                                          textAlign: TextAlign.center,
+                                          style: GoogleFonts.acme(
+                                            color: Color(0xFF20401B),
+                                            fontSize: 15.50,
+                                            fontWeight: FontWeight.w400,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              left: 12,
+                              top: 135,
+                              child: SizedBox(
+                                width: 111,
+                                height: 22.51,
+                                child: Text(
+                                  product != null ? product['mainCategory'].toString().toLowerCase() : plant['category'].toString().toLowerCase(),
+                                  style: GoogleFonts.playfairDisplay(
+                                    color: Colors.white.withOpacity(
+                                        0.7400000095367432),
+                                    fontSize: 12,
                                     fontWeight: FontWeight.w400,
                                   ),
                                 ),
                               ),
                             ),
+                            Positioned(
+                              left: 13,
+                              top: 40.31,
+                              child: Container(
+                                width: 40,
+                                height: 43.45,
+                                clipBehavior: Clip.antiAlias,
+                                decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0)),
+                                child: IconButton(
+                                    icon: Icon(
+                                      isLiked ? Icons.favorite : Icons
+                                          .favorite_border,
+                                      color: isLiked
+                                          ? Colors.red.shade600
+                                          : null, // Set the color to red if it's liked
+                                    ),
+                                    onPressed: _toggleLike,
+                                    color: Colors.white),
+                              ),
+                            ),
+                            Positioned(
+                              left: 61,
+                              top: 0,
+                              child: Container(
+                                width: 69,
+                                height: 115,
+                                child: imageUrl != null
+                                    ? Image.network(
+                                  imageUrl,
+                                  width: 38.26,
+                                  height: 70.48,
+                                  fit: BoxFit.fill,
+                                )
+                                    : Image.asset("assets/category/f1.png",
+                                  width: 28.26,
+                                  height: 63.48,
+                                  fit: BoxFit.fill,
+                                ),
+                              ),
+                            ),
                           ],
                         ),
-                      ),
-                    ),
-                    Positioned(
-                      left: 12,
-                      top: 135,
-                      child: SizedBox(
-                        width: 111,
-                        height: 22.51,
-                        child: Text(
-                          plantList[index].plantCategory,
-                          style: GoogleFonts.playfairDisplay(
-                            color: Colors.white.withOpacity(0.7400000095367432),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      left: 13,
-                      top: 40.31,
-                      child: Container(
-                        width: 40,
-                        height: 43.45,
-                        clipBehavior: Clip.antiAlias,
-                        decoration: BoxDecoration(color: Colors.black.withOpacity(0)),
-                        child: LikeButton(),
-                      ),
-                    ),
-                    Positioned(
-                      left: 61,
-                      top: 0,
-                      child: Container(
-                        width: 69,
-                        height: 115,
-                        decoration: BoxDecoration(
-                          image: DecorationImage(
-                            image: AssetImage(plantList[index].plantImage),
-                            fit: BoxFit.fill,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
+                      );
+                    });
+              }),
+            ),
+        //     Container(
+        //       padding: EdgeInsets.only(left:10),
+        //       alignment: Alignment.topLeft,
+        //
+        //       child: Text("Trending",
+        //           style: GoogleFonts.playfairDisplay(
+        //             color: Color(0xFF0D0D0D),
+        //             fontSize: 20,
+        //
+        //             fontWeight: FontWeight.w600,
+        //           ),
+        //           textAlign: TextAlign.left),
+        //
+        //
+        //     ),
+        //     Container(
+        //       height: 220,
+        //       child: ListView.builder(
+        //         scrollDirection: Axis.horizontal,
+        //         itemCount: plantList.length,
+        //         itemBuilder: (context, index) {
+        //           return Container(
+        //             width: 130, // Adjust the width of each item as needed
+        //             margin: EdgeInsets.symmetric(horizontal: 10),
+        //             child: Stack(
+        //               children: [
+        //                 Positioned(
+        //                   left: 131,
+        //                   top: 190,
+        //                   child: Transform(
+        //                     transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(-3.14),
+        //                     child: Container(
+        //                       width: 131,
+        //                       height: 166,
+        //                       decoration: ShapeDecoration(
+        //                         gradient: LinearGradient(
+        //                           begin: Alignment(0.00, -1.00),
+        //                           end: Alignment(0, 1),
+        //                           colors: [ Color(0xFF99A897),Color(0xFF50694C),Color(0xFF21411C)],
+        //                         ),
+        //                         shape: RoundedRectangleBorder(
+        //                           borderRadius: BorderRadius.circular(24),
+        //                         ),
+        //                       ),
+        //                     ),
+        //                   ),
+        //                 ),
+        //                 Positioned(
+        //                   left: 12,
+        //                   top: 111,
+        //                   child: SizedBox(
+        //                     width: 147,
+        //                     height: 24,
+        //                     child: Text(
+        //                       plantList[index].plantName,
+        //                       style: GoogleFonts.playfairDisplay(
+        //                         color: Colors.white,
+        //                         fontSize: 18,
+        //                         fontWeight: FontWeight.w600,
+        //                       ),
+        //                     ),
+        //                   ),
+        //                 ),
+        //                 Positioned(
+        //                   left: 85,
+        //                   top: 145.34,
+        //                   child: Container(
+        //                     width: 35,
+        //                     height: 30.45,
+        //                     clipBehavior: Clip.antiAlias,
+        //                     decoration: BoxDecoration(color: Colors.black.withOpacity(0)),
+        //                     child: IconButton(
+        //                       onPressed: (){},
+        //                       icon: Icon(Icons.shopping_cart),
+        //                       color:Colors.white.withOpacity(0.7400000095367432),
+        //                     ),
+        //                   ),
+        //                 ),
+        //                 Positioned(
+        //                   left: 13,
+        //                   top: 161,
+        //                   child: Container(
+        //                     width: 55.23,
+        //                     height: 18.57,
+        //                     child: Stack(
+        //                       children: [
+        //                         Positioned(
+        //                           left: 0,
+        //                           top: 0,
+        //                           child: Container(
+        //                             width: 55.23,
+        //                             height: 18.57,
+        //                             decoration: ShapeDecoration(
+        //                               color: Colors.white.withOpacity(0.7099999785423279),
+        //                               shape: RoundedRectangleBorder(
+        //                                 borderRadius: BorderRadius.circular(24),
+        //                               ),
+        //                             ),
+        //                           ),
+        //                         ),
+        //                         Positioned(
+        //                           left: 3,
+        //                           top: 0,
+        //                           child: SizedBox(
+        //                             width: 45,
+        //                             height: 18,
+        //                             child: Text(
+        //                               '₹'+plantList[index].plantPrice,
+        //                               textAlign: TextAlign.center,
+        //                               style: GoogleFonts.acme(
+        //                                 color: Color(0xFF20401B),
+        //                                 fontSize: 15.50,
+        //                                 fontWeight: FontWeight.w400,
+        //                               ),
+        //                             ),
+        //                           ),
+        //                         ),
+        //                       ],
+        //                     ),
+        //                   ),
+        //                 ),
+        //                 Positioned(
+        //                   left: 12,
+        //                   top: 135,
+        //                   child: SizedBox(
+        //                     width: 111,
+        //                     height: 22.51,
+        //                     child: Text(
+        //                       plantList[index].plantCategory,
+        //                       style: GoogleFonts.playfairDisplay(
+        //                         color: Colors.white.withOpacity(0.7400000095367432),
+        //                         fontSize: 12,
+        //                         fontWeight: FontWeight.w400,
+        //                       ),
+        //                     ),
+        //                   ),
+        //                 ),
+        //                 Positioned(
+        //                   left: 13,
+        //                   top: 40.31,
+        //                   child: Container(
+        //                     width: 40,
+        //                     height: 43.45,
+        //                     clipBehavior: Clip.antiAlias,
+        //                     decoration: BoxDecoration(color: Colors.black.withOpacity(0)),
+        //                     child: LikeButton(),
+        //                   ),
+        //                 ),
+        //                 Positioned(
+        //                   left: 61,
+        //                   top: 0,
+        //                   child: Container(
+        //                     width: 69,
+        //                     height: 115,
+        //                     decoration: BoxDecoration(
+        //                       image: DecorationImage(
+        //                         image: AssetImage(plantList[index].plantImage),
+        //                         fit: BoxFit.fill,
+        //                       ),
+        //                     ),
+        //                   ),
+        //                 ),
+        //               ],
+        //             ),
+        //           );
+        //         },
+        //       ),
+        //     ),
+        //     Container(
+        //       padding: EdgeInsets.only(left:10),
+        //       alignment: Alignment.topLeft,
+        //
+        //       child: Text("Recently Viewed",
+        //           style: GoogleFonts.playfairDisplay(
+        //             color: Color(0xFF0D0D0D),
+        //             fontSize: 20,
+        //
+        //             fontWeight: FontWeight.w600,
+        //           ),
+        //           textAlign: TextAlign.left),
+        //
+        //
+        //     ),
+        // Container(
+        //   height: 220,
+        //   child: ListView.builder(
+        //     scrollDirection: Axis.horizontal,
+        //     itemCount: plantList.length,
+        //     itemBuilder: (context, index) {
+        //       return Container(
+        //         width: 130, // Adjust the width of each item as needed
+        //         margin: EdgeInsets.symmetric(horizontal: 10),
+        //         child: Stack(
+        //           children: [
+        //             Positioned(
+        //               left: 131,
+        //               top: 190,
+        //               child: Transform(
+        //                 transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(-3.14),
+        //                 child: Container(
+        //                   width: 131,
+        //                   height: 166,
+        //                   decoration: ShapeDecoration(
+        //                     gradient: LinearGradient(
+        //                       begin: Alignment(0.00, -1.00),
+        //                       end: Alignment(0, 1),
+        //                       colors: [ Color(0xFF99A897),Color(0xFF50694C),Color(0xFF21411C)],
+        //                     ),
+        //                     shape: RoundedRectangleBorder(
+        //                       borderRadius: BorderRadius.circular(24),
+        //                     ),
+        //                   ),
+        //                 ),
+        //               ),
+        //             ),
+        //             Positioned(
+        //               left: 12,
+        //               top: 111,
+        //               child: SizedBox(
+        //                 width: 147,
+        //                 height: 24,
+        //                 child: Text(
+        //                   plantList[index].plantName,
+        //                   style: GoogleFonts.playfairDisplay(
+        //                     color: Colors.white,
+        //                     fontSize: 18,
+        //                     fontWeight: FontWeight.w600,
+        //                   ),
+        //                 ),
+        //               ),
+        //             ),
+        //             Positioned(
+        //               left: 85,
+        //               top: 145.34,
+        //               child: Container(
+        //                 width: 35,
+        //                 height: 30.45,
+        //                 clipBehavior: Clip.antiAlias,
+        //                 decoration: BoxDecoration(color: Colors.black.withOpacity(0)),
+        //                 child: IconButton(
+        //                   onPressed: (){},
+        //                   icon: Icon(Icons.shopping_cart),
+        //                   color:Colors.white.withOpacity(0.7400000095367432),
+        //                 ),
+        //               ),
+        //             ),
+        //             Positioned(
+        //               left: 13,
+        //               top: 161,
+        //               child: Container(
+        //                 width: 55.23,
+        //                 height: 18.57,
+        //                 child: Stack(
+        //                   children: [
+        //                     Positioned(
+        //                       left: 0,
+        //                       top: 0,
+        //                       child: Container(
+        //                         width: 55.23,
+        //                         height: 18.57,
+        //                         decoration: ShapeDecoration(
+        //                           color: Colors.white.withOpacity(0.7099999785423279),
+        //                           shape: RoundedRectangleBorder(
+        //                             borderRadius: BorderRadius.circular(24),
+        //                           ),
+        //                         ),
+        //                       ),
+        //                     ),
+        //                     Positioned(
+        //                       left: 3,
+        //                       top: 0,
+        //                       child: SizedBox(
+        //                         width: 45,
+        //                         height: 18,
+        //                         child: Text(
+        //                           '₹'+plantList[index].plantPrice,
+        //                           textAlign: TextAlign.center,
+        //                           style: GoogleFonts.acme(
+        //                             color: Color(0xFF20401B),
+        //                             fontSize: 15.50,
+        //                             fontWeight: FontWeight.w400,
+        //                           ),
+        //                         ),
+        //                       ),
+        //                     ),
+        //                   ],
+        //                 ),
+        //               ),
+        //             ),
+        //             Positioned(
+        //               left: 12,
+        //               top: 135,
+        //               child: SizedBox(
+        //                 width: 111,
+        //                 height: 22.51,
+        //                 child: Text(
+        //                   plantList[index].plantCategory,
+        //                   style: GoogleFonts.playfairDisplay(
+        //                     color: Colors.white.withOpacity(0.7400000095367432),
+        //                     fontSize: 12,
+        //                     fontWeight: FontWeight.w400,
+        //                   ),
+        //                 ),
+        //               ),
+        //             ),
+        //             Positioned(
+        //               left: 13,
+        //               top: 40.31,
+        //               child: Container(
+        //                 width: 40,
+        //                 height: 43.45,
+        //                 clipBehavior: Clip.antiAlias,
+        //                 decoration: BoxDecoration(color: Colors.black.withOpacity(0)),
+        //                 child: LikeButton(),
+        //               ),
+        //             ),
+        //             Positioned(
+        //               left: 61,
+        //               top: 0,
+        //               child: Container(
+        //                 width: 69,
+        //                 height: 115,
+        //                 decoration: BoxDecoration(
+        //                   image: DecorationImage(
+        //                     image: AssetImage(plantList[index].plantImage),
+        //                     fit: BoxFit.fill,
+        //                   ),
+        //                 ),
+        //               ),
+        //             ),
+        //           ],
+        //         ),
+        //       );
+        //     },
+        //   ),
+        // ),
           ],
         ),
       ),

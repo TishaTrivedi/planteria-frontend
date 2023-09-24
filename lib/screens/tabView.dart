@@ -99,7 +99,9 @@ class Soil extends StatefulWidget {
 
 class _SoilState extends State<Soil> with SingleTickerProviderStateMixin {
 
+  int quant=1;
   bool isLiked = false;
+  bool productRemoved=false;
 
   void _toggleLike() {
     setState(() {
@@ -205,10 +207,50 @@ class _SoilState extends State<Soil> with SingleTickerProviderStateMixin {
                           // Adjust the width of each item as needed
                           margin: EdgeInsets.symmetric(horizontal: 10),
                           child: GestureDetector(
-                            onTap: () {
+                            onTap: () async {
                               Navigator.push(context, MaterialPageRoute(
                                   builder: (context) => Fertilizers(plantId: plantId,)));
+                              final addToRecentlyViewedMutation=gql('''
+                              mutation AddToRecentlyViewed(\$plantId: ID!) {
+                                addToRecentlyViewed(customerId:1,itemId:\$plantId,itemType:"plant"){
+                                  recentlyViewed{
+                                    plantId{
+                                       plantName
+                                      price
+                                      category
+                                      images
+                                    }
+                                   
+                                  }
+                                }
+                              }
+                              ''');
+                            try {
+                            final result = await client.mutate(
+                            MutationOptions(
+                            document: addToRecentlyViewedMutation,
+                            variables: {'plantId': plant['id']},
+                            ),
+                            );
+
+                            if (result.hasException) {
+                            // Handle the error here.
+                            print('Error: ${result.exception.toString()}');
+                            // You can also show an error message to the user.
+                            } else {
+                            // Product added to cart successfully.
+                            // You can update the UI or show a confirmation message.
+
+                            print('Plant added to recently Viewed.');
+                            }
+                            } catch (error) {
+                            // Handle any unexpected errors here.
+                            print('Unexpected error: $error');
+                            }
+
                             },
+
+
                             child: Stack(
                               children: [
                                 Positioned(
@@ -268,7 +310,53 @@ class _SoilState extends State<Soil> with SingleTickerProviderStateMixin {
                                         color: Colors.black.withOpacity(
                                             0)),
                                     child: IconButton(
-                                      onPressed: () {},
+                                      onPressed: () async {
+                                        final addProductToCartMutation = gql('''
+                                          mutation AddToCart(\$plantId: ID!, \$quantity: Int!) {
+                                            addToCart(customerId: 1, itemId: \$plantId, itemType: "plant", quantity: \$quantity) {
+                                              savedProduct {
+                                                id
+                                                # Add other fields you want to retrieve
+                                              }
+                                            }
+                                          }
+                                        ''');
+
+                                        try {
+                                          final result = await client.mutate(
+                                            MutationOptions(
+                                              document: addProductToCartMutation,
+                                              variables: {
+                                                'plantId': plant['id'],
+                                                'quantity': quant, // Specify the quantity you want to add to the cart
+                                              },
+                                            ),
+                                          );
+                                          if (result.hasException) {
+                                            // Handle the error here.
+                                            print('Error: ${result.exception.toString()}');
+                                            // You can also show an error message to the user.
+                                          } else {
+                                            // Product added to cart successfully.
+                                            // You can update the UI or show a confirmation message.
+                                            print('Plant added to cart.');
+                                            setState(() {
+                                              productRemoved = true;
+                                            });
+                                            //print('Item removed from cart successfully.');
+                                            // Show a Snackbar with the success message
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Text('Plant added to cart.'),
+                                                duration: Duration(seconds: 2), // You can adjust the duration
+                                              ),
+                                            );
+                                          }
+                                        } catch (error) {
+                                          // Handle any unexpected errors here.
+                                          print('Unexpected error: $error');
+                                        }
+                                      },
                                       icon: Icon(Icons.shopping_cart),
                                       color: Colors.white.withOpacity(
                                           0.7400000095367432),
@@ -357,46 +445,79 @@ class _SoilState extends State<Soil> with SingleTickerProviderStateMixin {
                                       ),
                                       onPressed: () async {
                                         print('Plant ID: ${plant['id']}');
+                                        final isLiked = plantLikedStates[plant['id']] ?? false;
 
+                                        if (!isLiked) {
+                                          // Add plant to the wishlist
+                                          final result = await client.mutate(
+                                            MutationOptions(
+                                              document: gql('''
+          mutation AddToWishlist(\$plantId: ID!) {
+            addPlantsToWishlist(customerId: 1, plantId: \$plantId) {
+              savedPlant {
+                id
+              }
+            }
+          }
+        '''),
+                                              variables: {
+                                                'plantId': plant['id'],
+                                              },
+                                            ),
+                                          );
 
-                                        final result = await client.mutate(
-                                          MutationOptions(
-                                            document: gql('''
-                                              mutation AddToWishlist(\$plantId: ID!) {
-                                                addPlantsToWishlist(customerId: 1, plantId: \$plantId) {
-                                                  savedPlant {
-                                                    id
-                                                  }
-                                                }
-                                              }
-                                            '''),
-                                            variables: {
-                                              'plantId': plant['id'],
-
-                                            },
-
-                                          ),
-
-                                        );
-
-                                        if (result.hasException) {
-                                          print('Error adding to wishlist: ${result.exception.toString()}');
+                                          if (result.hasException) {
+                                            print('Error adding to wishlist: ${result.exception.toString()}');
+                                          } else {
+                                            setState(() {
+                                              // Toggle the liked state in the plantLikedStates map
+                                              plantLikedStates[plant['id']] = true;
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(
+                                                  content: Text('Plant added to wishlist successfully.'),
+                                                  duration: Duration(seconds: 2),
+                                                ),
+                                              );
+                                            });
+                                            print("Added successfully");
+                                          }
                                         } else {
-                                          setState(() {
-                                            // Toggle the liked state in the plantLikedStates map
-                                            plantLikedStates[plant['id']] = !(plantLikedStates[plant['id']] ?? false);
-                                            print("After Update: plantLikedStates[${plant['id']}] = ${plantLikedStates[plant['id']]}"); // Debug statement after state update
+                                          // Remove plant from the wishlist
+                                          final result = await client.mutate(
+                                            MutationOptions(
+                                              document: gql('''
+          mutation RemoveFromWishlist(\$plantId: ID!) {
+            removePlantsFromWishlist(customerId: 1, plantId: \$plantId) {
+              deletedCount
+            }
+          }
+        '''),
+                                              variables: {
+                                                'plantId': plant['id'],
+                                              },
+                                            ),
+                                          );
 
-                                          });
-                                          print("Added successfully");
+                                          if (result.hasException) {
+                                            print('Error removing from wishlist: ${result.exception.toString()}');
+                                          } else {
+                                            setState(() {
+                                              // Toggle the liked state in the plantLikedStates map
+                                              plantLikedStates[plant['id']] = false;
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(
+                                                  content: Text('Plant removed from wishlist successfully.'),
+                                                  duration: Duration(seconds: 2),
+                                                ),
+                                              );
+                                            });
+                                            print("Removed successfully");
+                                          }
                                         }
                                       },
-                                      // color: Colors.grey,
+                                      color: Colors.grey,
 
-                                    )
-
-
-                                  ),),
+                                  ),)),
                                 Positioned(
                                   left: 71,
                                   top: -10,

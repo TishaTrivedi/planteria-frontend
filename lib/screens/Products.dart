@@ -17,8 +17,9 @@ class Products extends StatefulWidget {
 }
 
 class _ProductsState extends State<Products> with SingleTickerProviderStateMixin{
-
+  int quant=1;
   bool isLiked = false;
+  bool productRemoved=false;
 
   void _toggleLike() {
     setState(() {
@@ -124,10 +125,48 @@ class _ProductsState extends State<Products> with SingleTickerProviderStateMixin
                   // Adjust the width of each item as needed
                   margin: EdgeInsets.symmetric(horizontal: 10),
                   child: GestureDetector(
-                  onTap: () {
+                  onTap: () async{
                   Navigator.push(context, MaterialPageRoute(
                      builder: (context) => ProductDesc(productId: productId)));
+                  final addToRecentlyViewedMutation=gql('''
+                              mutation AddToRecentlyViewed(\$productId: ID!) {
+                                addToRecentlyViewed(customerId:1,itemId:\$productId,itemType:"product"){
+                                  recentlyViewed{
+                                   
+                                    productId{
+                                      productName
+                                      images
+                                      price
+                                    }
+                                  }
+                                }
+                              }
+                              ''');
+                  try {
+                  final result = await client.mutate(
+                  MutationOptions(
+                  document: addToRecentlyViewedMutation,
+                  variables: {'productId': product['id']},
+                  ),
+                  );
+
+                  if (result.hasException) {
+                  // Handle the error here.
+                  print('Error: ${result.exception.toString()}');
+                  // You can also show an error message to the user.
+                  } else {
+                  // Product added to cart successfully.
+                  // You can update the UI or show a confirmation message.
+
+                  print('Product added to recently Viewed.');
+                  }
+                  } catch (error) {
+                  // Handle any unexpected errors here.
+                  print('Unexpected error: $error');
+                  }
+
                   },
+
                   child: Stack(
                   children: [
 
@@ -188,7 +227,55 @@ class _ProductsState extends State<Products> with SingleTickerProviderStateMixin
                   color: Colors.black.withOpacity(
                   0)),
                   child: IconButton(
-                  onPressed: () {},
+                      onPressed: () async {
+                        final addProductToCartMutation = gql('''
+                                          mutation AddToCart(\$productId: ID!, \$quantity: Int!) {
+                                            addToCart(customerId: 1, itemId: \$productId, itemType: "product", quantity: \$quantity) {
+                                              savedProduct {
+                                                id
+                                                # Add other fields you want to retrieve
+                                              }
+                                            }
+                                          }
+                                        ''');
+
+                        try {
+                          final result = await client.mutate(
+                            MutationOptions(
+                              document: addProductToCartMutation,
+                              variables: {
+                                'productId': product['id'],
+                                'quantity': quant, // Specify the quantity you want to add to the cart
+                              },
+                            ),
+                          );
+
+                          if (result.hasException) {
+                            // Handle the error here.
+                            print('Error: ${result.exception.toString()}');
+                            // You can also show an error message to the user.
+                          } else {
+                            // Product added to cart successfully.
+                            // You can update the UI or show a confirmation message.
+
+                            print('Product added to cart.');
+                            setState(() {
+                              productRemoved = true;
+                            });
+                            //print('Item removed from cart successfully.');
+                            // Show a Snackbar with the success message
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Product Added to cart successfully.'),
+                                duration: Duration(seconds: 2), // You can adjust the duration
+                              ),
+                            );
+                          }
+                        } catch (error) {
+                          // Handle any unexpected errors here.
+                          print('Unexpected error: $error');
+                        }
+                      },
                   icon: Icon(Icons.shopping_cart),
                   color: Colors.white.withOpacity(
                   0.7400000095367432),
@@ -295,6 +382,17 @@ class _ProductsState extends State<Products> with SingleTickerProviderStateMixin
                               setState(() {
                                 productLikedStates[productId] = true;
                                 print("Added successfully");
+                                setState(() {
+                                  productRemoved = true;
+                                });
+                                //print('Item removed from cart successfully.');
+                                // Show a Snackbar with the success message
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Product Added to wishlist successfully.'),
+                                    duration: Duration(seconds: 2), // You can adjust the duration
+                                  ),
+                                );
                               });
                             }
                           } else {
@@ -321,6 +419,17 @@ class _ProductsState extends State<Products> with SingleTickerProviderStateMixin
                               setState(() {
                                 productLikedStates[productId] = false;
                                 print("Removed successfully");
+                                setState(() {
+                                  productRemoved = true;
+                                });
+                                print('Item removed from cart successfully.');
+                                // Show a Snackbar with the success message
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Product removed from wishlist successfully.'),
+                                    duration: Duration(seconds: 2), // You can adjust the duration
+                                  ),
+                                );
                               });
                             }
                           }

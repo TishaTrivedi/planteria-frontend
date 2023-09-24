@@ -30,7 +30,7 @@ class _ProductDescState extends State<ProductDesc> {
 
   }
 
-  final HttpLink httpLink = HttpLink('http://192.168.1.112:8000/graphql');
+  final HttpLink httpLink = HttpLink('http://192.168.1.112:8000/graphql/');
 
   late GraphQLClient client;
 
@@ -68,6 +68,8 @@ class _ProductDescState extends State<ProductDesc> {
       isLiked = !isLiked;
     });
   }
+  Map<String, bool> productLikedStates = {};
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -232,13 +234,79 @@ class _ProductDescState extends State<ProductDesc> {
                                 Positioned(
                                     top: 100,
                                     left: 167.24,
-                                    child: IconButton(
-                                      icon:Icon(
-                                        isLiked ? Icons.favorite : Icons.favorite_border,
-                                        color: isLiked ? Colors.red.shade600 : null, // Set the color to red if it's liked
+                                    child:IconButton(
+                                      icon: Icon(
+                                        productLikedStates[products['id']] ?? false
+                                            ? Icons.favorite
+                                            : Icons.favorite_outline,
+                                        color: productLikedStates[products['id']] ?? false
+                                            ? Colors.red
+                                            : Colors.grey.withOpacity(0.5),
                                       ),
-                                      onPressed: _toggleLike,)),
+                                      onPressed: () async {
+                                        final productId = products['id'];
 
+                                        // Check if the product is liked or not
+                                        final isLiked = productLikedStates[productId] ?? false;
+
+                                        // If the product is not liked, add it to the wishlist
+                                        if (!isLiked) {
+                                          final result = await client.mutate(
+                                            MutationOptions(
+                                              document: gql('''
+                                              mutation addProductsToWishlist(\$customerId: ID!, \$productId: ID!) {
+                                                addProductsToWishlist(customerId: \$customerId, productId: \$productId) {
+                                                  savedProduct {
+                                                    id
+                                                  }
+                                                }
+                                              }
+                                            '''),
+                                              variables: {
+                                                'customerId': 1, // Replace with the actual customer ID.
+                                                'productId': productId,
+                                              },
+                                            ),
+                                          );
+
+                                          if (result.hasException) {
+                                            print('Error adding to wishlist: ${result.exception.toString()}');
+                                          } else {
+                                            setState(() {
+                                              productLikedStates[productId] = true;
+                                              print("Added successfully");
+                                            });
+                                          }
+                                        } else {
+                                          // If the product is liked, remove it from the wishlist
+                                          final result = await client.mutate(
+                                            MutationOptions(
+                                              document: gql('''
+                                  mutation removeProductsFromWishlist(\$customerId: ID!, \$productId: ID!) {
+                                    removeProductsFromWishlist(customerId: \$customerId, productId: \$productId) {
+                                      deletedCount
+                                    }
+                                  }
+                                '''),
+                                              variables: {
+                                                'customerId': 1, // Replace with the actual customer ID.
+                                                'productId': productId,
+                                              },
+                                            ),
+                                          );
+
+                                          if (result.hasException) {
+                                            print('Error removing from wishlist: ${result.exception.toString()}');
+                                          } else {
+                                            setState(() {
+                                              productLikedStates[productId] = false;
+                                              print("Removed successfully");
+                                            });
+                                          }
+                                        }
+                                      },
+                                      color: Colors.grey,
+                                    )),
                                 // TabView
                                 Positioned(
                                   left: 176,
@@ -331,53 +399,90 @@ class _ProductDescState extends State<ProductDesc> {
                                   ),
                                 ),
 
+                                // Positioned(
+                                //   left: 232,
+                                //   top: 527,
+                                //   child: Container(
+                                //     width: 191.77,
+                                //     height: 32.09,
+                                //     decoration: ShapeDecoration(
+                                //       color: Color(0xFF21411C),
+                                //       shape: RoundedRectangleBorder(
+                                //         borderRadius: BorderRadius.circular(24),
+                                //       ),
+                                //     ),
+                                //   ),
+                                // ),
                                 Positioned(
                                   left: 232,
-                                  top: 527,
-                                  child: Container(
-                                    width: 191.77,
-                                    height: 32.09,
-                                    decoration: ShapeDecoration(
-                                      color: Color(0xFF21411C),
+                                  top: 527.68,
+                                  child: ElevatedButton(
+                                    onPressed: () async {
+                                    final addProductToCartMutation = gql('''
+                                          mutation AddToCart(\$productId: ID!, \$quantity: Int!) {
+                                            addToCart(customerId: 1, itemId: \$productId, itemType: "product", quantity: \$quantity) {
+                                              savedProduct {
+                                                id
+                                                # Add other fields you want to retrieve
+                                              }
+                                            }
+                                          }
+                                        ''');
+
+                                    try {
+                                    final result = await client.mutate(
+                                    MutationOptions(
+                                    document: addProductToCartMutation,
+                                    variables: {
+                                    'productId': products['id'],
+                                    'quantity': quant, // Specify the quantity you want to add to the cart
+                                    },
+                                    ),
+                                    );
+
+                                    if (result.hasException) {
+                                    // Handle the error here.
+                                    print('Error: ${result.exception.toString()}');
+                                    // You can also show an error message to the user.
+                                    } else {
+                                    // Product added to cart successfully.
+                                    // You can update the UI or show a confirmation message.
+                                    print('Product added to cart.');
+                                    }
+                                    } catch (error) {
+                                    // Handle any unexpected errors here.
+                                    print('Unexpected error: $error');
+
+                                      }
+                                    },
+                                    child:Row(
+                                      children: [
+                                      Icon(Icons.shopping_cart,
+                                              color: Colors.white,
+                                              size: 18,),
+                                            SizedBox(
+                                              width: 10,
+                                            ),
+                                            Text(
+                                              'Add To Cart',
+                                              style: GoogleFonts.playfairDisplay(
+                                                color: Colors.white,
+                                                fontSize: 20,
+                                                //fontFamily: 'Playfair Display',
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                      ],
+                                    ) ,
+                                    style: ElevatedButton.styleFrom(
+                                     backgroundColor: Color(0xFF21411C),
+                                      minimumSize: Size(191.77, 32),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(24),
                                       ),
                                     ),
-                                  ),
-                                ),
-                                Positioned(
-                                  left: 255,
-                                  top: 527.68,
-                                  child: ElevatedButton(
-                                    onPressed: () async {
-                                      final addProductToCartMutation = gql('''
-                                      mutation AddToCart(\$productId: ID!) {
-                                        AddToCart(productId: \$productId) {
-                                          id
-                                          name
-                                          price
-                                        }
-                                      }
-                                    ''');
+                                  )
 
-                                      final result = await client.mutate(
-                                        MutationOptions(
-                                          document: addProductToCartMutation,
-                                          variables: {'productId': products['id']},
-                                        ),
-                                      );
-
-                                      if (result.hasException) {
-                                        // Handle the error here.
-                                        print('Error: ${result.exception.toString()}');
-                                      } else {
-                                        // Product added to cart successfully.
-                                        // You can update the UI or show a confirmation message.
-                                        print('Product added to cart.');
-                                      }
-                                    },
-                                    child: Text('Add to Cart'),
-                                  ),
 
                                   // SizedBox(
                                   //   width: 165.95,
