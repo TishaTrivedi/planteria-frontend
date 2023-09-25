@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
 import '../Animations/scale_animation.dart';
+import '../graphql_client.dart';
 import 'fertilizers.dart';
 
 class TabView extends StatelessWidget {
@@ -21,8 +22,7 @@ class TabView extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
-    final HttpLink httpLink = HttpLink('http://192.168.1.112:8000/graphql'); // Replace with your GraphQL endpoint.
+  Widget build(BuildContext context) {// Replace with your GraphQL endpoint.
 
     final GraphQLClient client = GraphQLClient(
       link: httpLink,
@@ -110,7 +110,6 @@ class _SoilState extends State<Soil> with SingleTickerProviderStateMixin {
   }
 
   Map<String, bool> plantLikedStates = {};
-  final HttpLink httpLink = HttpLink('http://192.168.1.112:8000/graphql/');
 
   late GraphQLClient client;
 
@@ -198,7 +197,7 @@ class _SoilState extends State<Soil> with SingleTickerProviderStateMixin {
                     itemBuilder: (context, index) {
                       final plant = plants[index];
                       final plantId = plant['id'];
-                      final imageUrl = "http://192.168.1.112:8000/media/${plant['images']}";
+                      final imageUrl = "${httpLinkImage}${plant['images']}";
                       // plantLikedStates[plant['id']] = false;
 
 

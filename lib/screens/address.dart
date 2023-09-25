@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:graphql/client.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
+import '../graphql_client.dart';
+
 class Address extends StatefulWidget {
  // const Address({Key? key}) : super(key: key);
 
@@ -12,7 +14,6 @@ class Address extends StatefulWidget {
 }
 
 class _AddressState extends State<Address> {
-  final HttpLink httpLink = HttpLink('http://192.168.1.112:8000/graphql/');
 
   late GraphQLClient client;
 

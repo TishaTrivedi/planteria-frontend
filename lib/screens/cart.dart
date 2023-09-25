@@ -1,9 +1,10 @@
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:graphql/client.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:plantbackend/screens/checkout.dart';
+
+import '../graphql_client.dart';
 
 class ShoppingCart extends StatefulWidget {
   //const ShoppingCart({Key? key}) : super(key: key);
@@ -31,8 +32,6 @@ class _ShoppingCartState extends State<ShoppingCart> {
       }
     });
   }
-
-  final HttpLink httpLink = HttpLink('http://192.168.1.112:8000/graphql/');
 
   late GraphQLClient client;
 
@@ -62,19 +61,131 @@ class _ShoppingCartState extends State<ShoppingCart> {
 
   final String removeFromCartMutation = '''
   mutation RemoveFromCart(\$customerId: ID!, \$itemId: ID!, \$itemType: String!) {
-  removeFromCart(customerId: \$customerId, itemId: \$itemId, itemType: \$itemType) {
-    deletedCount
-  }
-}
+      removeFromCart(customerId: \$customerId, itemId: \$itemId, itemType: \$itemType) {
+        deletedCount
+      }
+    }  
+  ''';
 
-  
+  final String addQuantityFromCart = '''
+  mutation (\$customerId: Int!, \$cartItemId: Int!) {
+    increaseCartQuantity(customerId: \$customerId, cartItemId: \$cartItemId) {
+      cartItem {
+        id
+        quantity
+      }
+    }
+  }
 ''';
-  Future<void> removeFromCart(String customerId, String itemId, String itemType) async {
+
+  final String subtractQuantityFromCart = '''
+  mutation (\$customerId: Int!, \$cartItemId: Int!) {
+    decreaseCartQuantity(customerId: \$customerId, cartItemId: \$cartItemId) {
+      cartItem {
+        id
+        quantity
+      }
+    }
+  }
+''';
+
+  Future<void> increaseQuantity(int customerId, int cartId) async {
+    print("Cart Id " + cartId.toString());
+    print("In Increase Quantity");
+    final MutationOptions options = MutationOptions(
+      document: gql(addQuantityFromCart), // Use the correct mutation name
+      variables: {
+        'customerId': customerId,
+        'cartItemId': cartId,
+      },
+    );
+
+    final QueryResult result = await client.mutate(options);
+
+    if (result.hasException) {
+      // Handle the error, e.g., show an error message
+      print('Error increasing item quantity: ${result.exception.toString()}');
+      print(customerId);
+    } else {
+      // Check the result and perform actions accordingly
+      final int increasedQuantity =
+      result.data?['increaseCartItemQuantity']['cartItem']['quantity'];
+
+      if (increasedQuantity != null) {
+        // Item quantity was successfully increased
+        print('Item quantity increased to $increasedQuantity');
+        setState(() {
+          // Update the UI or state as needed
+        });
+
+        // Show a Snackbar with the success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Product quantity increased to $increasedQuantity'),
+            duration: Duration(seconds: 2), // You can adjust the duration
+          ),
+        );
+      } else {
+        // Handle unexpected response
+        print('Unexpected result: ${result.toString()}');
+      }
+    }
+  }
+
+
+
+  Future<void> decreaseQuantity(int customerId, int cartId) async {
+    print("Cart Id " + cartId.toString());
+    print("In Decrease Quantity");
+    final MutationOptions options = MutationOptions(
+      document: gql(subtractQuantityFromCart), // Use the correct mutation name for decreasing
+      variables: {
+        'customerId': customerId,
+        'cartItemId': cartId,
+      },
+    );
+
+    final QueryResult result = await client.mutate(options);
+
+    if (result.hasException) {
+      // Handle the error, e.g., show an error message
+      print('Error decreasing item quantity: ${result.exception.toString()}');
+      print(customerId);
+    } else {
+      // Check the result and perform actions accordingly
+      final int decreasedQuantity =
+      result.data?['decreaseCartItemQuantity']['cartItem']['quantity'];
+
+      if (decreasedQuantity != null) {
+        // Item quantity was successfully decreased
+        print('Item quantity decreased to $decreasedQuantity');
+        setState(() {
+          // Update the UI or state as needed
+        });
+
+        // Show a Snackbar with the success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Product quantity decreased to $decreasedQuantity'),
+            duration: Duration(seconds: 2), // You can adjust the duration
+          ),
+        );
+      } else {
+        // Handle unexpected response
+        print('Unexpected result: ${result.toString()}');
+      }
+    }
+  }
+
+
+  Future<void> removeFromCart(
+      String customerId, String itemId, String itemType) async {
     // ...
     final MutationOptions options = MutationOptions(
       document: gql(removeFromCartMutation),
       variables: {
-        'customerId': customerId, // This is where you use the customerId variable
+        'customerId':
+            customerId, // This is where you use the customerId variable
         'itemId': itemId,
         'itemType': itemType,
       },
@@ -87,26 +198,26 @@ class _ShoppingCartState extends State<ShoppingCart> {
       // Handle the error, e.g., show an error message
       print('Error removing item from cart: ${result.exception.toString()}');
       print(customerId);
-    }  else if (result.data?['removeFromCart']['deletedCount'] == 1) {
-  // Item was successfully removed from the cart
-  print('Item removed from cart successfully.');
-  setState(() {
-    productRemoved = true;
-  });
-  print('Item removed from cart successfully.');
-  // Show a Snackbar with the success message
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text('Product removed successfully.'),
-      duration: Duration(seconds: 2), // You can adjust the duration
-    ),
-  );
-
+    } else if (result.data?['removeFromCart']['deletedCount'] == 1) {
+      // Item was successfully removed from the cart
+      print('Item removed from cart successfully.');
+      setState(() {
+        productRemoved = true;
+      });
+      print('Item removed from cart successfully.');
+      // Show a Snackbar with the success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Product quantity decreased'),
+          duration: Duration(seconds: 2), // You can adjust the duration
+        ),
+      );
     } else {
       // Handle unexpected response
       print('Unexpected result: ${result.toString()}');
     }
   }
+
   @override
   void initState() {
     super.initState();
@@ -196,417 +307,463 @@ class _ShoppingCartState extends State<ShoppingCart> {
               children: [
                 Expanded(
                   child: ListView.builder(
-                                scrollDirection: Axis.vertical,
-                                //shrinkWrap: true,
-                                padding: EdgeInsets.only(top: 20,bottom: 40),
-                                itemCount: cartItems.length,
-                                itemBuilder: (context, index) {
-                                  final cartItem = cartItems[index];
-                                  final product = cartItem['product'];
+                    scrollDirection: Axis.vertical,
+                    //shrinkWrap: true,
+                    padding: EdgeInsets.only(top: 20, bottom: 40),
+                    itemCount: cartItems.length,
+                    itemBuilder: (context, index) {
+                      final cartItem = cartItems[index];
+                      final product = cartItem['product'];
 
-                                  final plant = cartItem['plant'];
-                                  final quantity = cartItem['quantity'];
-                                  String imageUrl;
-                                  if (product != null) {
-                                    imageUrl = "http://192.168.1.112:8000/media/${product['images']}";
-                                  } else if (plant != null) {
-                                    imageUrl = "http://192.168.1.112:8000/media/${plant['images']}";
-                                  } else {
-                                    imageUrl = "null"; // Handle the case where neither product nor plant is available
-                                  }
-                                  int subtotal = 0;
-                                  int shippingCost = 99;
-                                  int itemTotal = 0;
-                                  // Calculate subtotal based on cart items
-                                  for (final cartItem in cartItems) {
-                                    final product = cartItem['product'];
-                                    final plant = cartItem['plant'];
-                                    final quantity = cartItem['quantity'];
+                      final plant = cartItem['plant'];
+                      final quantity = cartItem['quantity'];
+                      String imageUrl;
+                      if (product != null) {
+                        imageUrl = "${httpLinkImage}${product['images']}";
+                      } else if (plant != null) {
+                        imageUrl = "${httpLinkImage}${plant['images']}";
+                      } else {
+                        imageUrl =
+                            "null"; // Handle the case where neither product nor plant is available
+                      }
+                      int subtotal = 0;
+                      int shippingCost = 99;
+                      int itemTotal = 0;
+                      // Calculate subtotal based on cart items
+                      for (final cartItem in cartItems) {
+                        final product = cartItem['product'];
+                        final plant = cartItem['plant'];
+                        final quantity = cartItem['quantity'];
 
+                        // Calculate item total (price * quantity)
 
+                        if (product != null) {
+                          itemTotal = product['price'] * quantity;
+                        } else if (plant != null) {
+                          itemTotal = plant['price'] * quantity;
+                        }
 
-                                    // Calculate item total (price * quantity)
+                        // Add item total to subtotal
+                        subtotal += itemTotal;
+                      }
+                      // final String itemType = product != null ? 'product' : 'plant';
+                      // final String itemId = product != null ? product['id'] : plant['id'];
+                      // final String customerId="1";
 
-                                    if (product != null) {
-                                      itemTotal = product['price'] * quantity;
-                                    } else if (plant != null) {
-                                      itemTotal = plant['price'] * quantity;
-                                    }
+                      // Calculate bag total (subtotal + shipping cost)
+                      int bagTotal = subtotal + shippingCost;
+                      final double topPosition = index * 100.0;
+                      //final productId=product['id'];
 
-                                    // Add item total to subtotal
-                                    subtotal += itemTotal;
-                                  }
-                                  // final String itemType = product != null ? 'product' : 'plant';
-                                  // final String itemId = product != null ? product['id'] : plant['id'];
-                                  // final String customerId="1";
-
-                                  // Calculate bag total (subtotal + shipping cost)
-                                  int bagTotal = subtotal + shippingCost;
-                                  final double topPosition = index * 100.0;
-                                  //final productId=product['id'];
-
-
-                                  return Container(
-                                  width: 329,
-                                  height:100.02,
-                                  child: Stack(
-                                    children: [
-
-                                  Positioned(
-                                    left: 0,
-                                    top: 0,
-                                    child: Container(
-                                      width: 329,
-                                      height: 91,
-                                      decoration: BoxDecoration(color: Colors.transparent),
-                                    ),
+                      return Container(
+                        width: 329,
+                        height: 100.02,
+                        child: Stack(
+                          children: [
+                            Positioned(
+                              left: 0,
+                              top: 0,
+                              child: Container(
+                                width: 329,
+                                height: 91,
+                                decoration:
+                                    BoxDecoration(color: Colors.transparent),
+                              ),
+                            ),
+                            Positioned(
+                              left: 100,
+                              top: 20,
+                              child: SizedBox(
+                                width: 112,
+                                height: 22,
+                                child: Text(
+                                  product != null
+                                      ? product['productName']
+                                      : plant['plantName'],
+                                  style: GoogleFonts.playfairDisplay(
+                                    color: Colors.black,
+                                    fontSize: 18,
+                                    //fontFamily: 'Playfair Display',
+                                    fontWeight: FontWeight.w600,
                                   ),
-                                  Positioned(
-                                    left: 100,
-                                    top: 20,
-                                    child: SizedBox(
-                                      width: 112,
-                                      height: 22,
-                                      child:
-                                        Text(product != null ? product['productName'] : plant['plantName'],
-                                        style: GoogleFonts.playfairDisplay(
-                                          color: Colors.black,
-                                          fontSize: 18,
-                                          //fontFamily: 'Playfair Display',
-                                          fontWeight: FontWeight.w600,
-                                        ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              left: 100,
+                              top: 40,
+                              child: SizedBox(
+                                width: 63.54,
+                                height: 19.43,
+                                child: Text(
+                                  product != null
+                                      ? product['size'].toString().toLowerCase()
+                                      : plant['size'].toString().toLowerCase(),
+                                  style: GoogleFonts.playfairDisplay(
+                                    color: Colors.black
+                                        .withOpacity(0.6700000166893005),
+                                    fontSize: 14,
+                                    //fontFamily: 'Playfair Display',
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              left: 100,
+                              top: 60,
+                              child: SizedBox(
+                                width: 42.49,
+                                height: 16.02,
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      "₹",
+                                      style: GoogleFonts.acme(
+                                        color: Color(0xFF0D0D0D),
+                                        fontSize: 15.50,
+                                        //fontFamily: 'Acme',
+                                        fontWeight: FontWeight.w400,
                                       ),
                                     ),
-                                  ),
-                                  Positioned(
-                                    left: 100,
-                                    top: 40,
-                                    child: SizedBox(
-                                      width: 63.54,
-                                      height: 19.43,
-                                      child: Text(
-                                        product != null ? product['size'].toString().toLowerCase() : plant['size'].toString().toLowerCase(),
-                                        style: GoogleFonts.playfairDisplay(
-                                          color: Colors.black.withOpacity(0.6700000166893005),
-                                          fontSize: 14,
-                                          //fontFamily: 'Playfair Display',
+                                    Text(
+                                      product != null
+                                          ? product['price'].toString()
+                                          : plant['price'].toString(),
+                                      textAlign: TextAlign.center,
+                                      style: GoogleFonts.acme(
+                                        color: Color(0xFF0D0D0D),
+                                        fontSize: 15.50,
+                                        //fontFamily: 'Acme',
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              left: 242,
+                              top: 42,
+                              child: SizedBox(
+                                  width: 133,
+                                  height: 31.12,
+                                  child: Row(
+                                    children: [
+                                      IconButton(
+                                        onPressed: () {
+                                          if (product != null || plant != null) {
+                                            if (cartItem != null) {
+                                              final int? itemId = int.tryParse(cartItem['id']);
+                                              if (itemId != null) {
+                                                print("Id of Item: $itemId");
+                                                final int customerId = 1; // Replace '1' with the actual customer ID
+                                                decreaseQuantity(customerId, itemId);
+                                              } else {
+                                                print("Invalid item ID");
+                                              }
+                                            } else {
+                                              print("Cart item is null");
+                                            }
+                                          }
+                                        },
+                                        icon: Icon(
+                                            Icons.remove_circle_outline_sharp,
+                                            color: Colors.black,
+                                            size: 20),
+                                      ),
+                                      Text(
+                                        quantity.toString(),
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 20,
+                                          fontFamily: 'Playfair Display',
                                           fontWeight: FontWeight.w400,
                                         ),
                                       ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    left: 100,
-                                    top: 60,
-                                    child: SizedBox(
-                                      width: 42.49,
-                                      height: 16.02,
-                                      child: Row(
-                                        children: [
-                                          Text("₹",
-                                            style: GoogleFonts.acme(
-                                              color: Color(0xFF0D0D0D),
-                                              fontSize: 15.50,
-                                              //fontFamily: 'Acme',
-                                              fontWeight: FontWeight.w400,
-                                            ),),
-                                          Text(product != null ? product['price'].toString() : plant['price'].toString(),
-                                            textAlign: TextAlign.center,
-                                            style: GoogleFonts.acme(
-                                              color: Color(0xFF0D0D0D),
-                                              fontSize: 15.50,
-                                              //fontFamily: 'Acme',
-                                              fontWeight: FontWeight.w400,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-
-                                  Positioned(
-                                    left: 242,
-                                    top: 42,
-                                    child: SizedBox(
-                                        width: 133,
-                                        height: 31.12,
-                                        child: Row(
-                                          children: [
-                                            IconButton(onPressed: (){
-                                              decrement();
-                                            },
-                                              icon: Icon(
-                                                  Icons.remove_circle_outline_sharp,
-                                                  color: Colors.black,
-                                                  size: 20),),
-
-                                            Text(
-                                              quantity.toString(),
-                                              style: TextStyle(
-                                                color: Colors.black,
-                                                fontSize: 20,
-                                                fontFamily: 'Playfair Display',
-                                                fontWeight: FontWeight.w400,
-                                              ),
-                                            ),
-
-                                            IconButton(onPressed: (){
-                                              increment();
-                                            },
-                                              icon:Icon(
-                                                  Icons.add_circle_outline_sharp,
-                                                  color: Colors.black,
-                                                  size: 20),),
-                                          ],
-                                        )
-                                    ),
-                                  ),
-                                  Positioned(
-                                    left: 310,
-                                    top: 10,
-                                    child: SizedBox(
-                                      width: 42.49,
-                                      height: 16.02,
-                                      child: IconButton(
+                                      IconButton(
                                         onPressed: () {
-
-                                          if (product != null ||
-                                              plant != null) {
-                                            final String itemId = product !=
-                                                null
-                                                ? product['id']
-                                                : plant['id'];
-                                            print(itemId);
-                                            final String itemType = product !=
-                                                null ? 'product' : 'plant';
-                                            final String customerId="1";
-                                            removeFromCart(customerId, itemId,
-                                                itemType); // Replace '1' with the actual customer ID
+                                          if (product != null || plant != null) {
+                                            if (cartItem != null) {
+                                              final int? itemId = int.tryParse(cartItem['id']);
+                                              if (itemId != null) {
+                                                print("Id of Item: $itemId");
+                                                final int customerId = 1; // Replace '1' with the actual customer ID
+                                                increaseQuantity(customerId, itemId);
+                                              } else {
+                                                print("Invalid item ID");
+                                              }
+                                            } else {
+                                              print("Cart item is null");
+                                            }
                                           }
                                         },
-                                        icon:Icon(Icons.cancel,
-                                          size: 20,
-                                          color: Colors.black54),
-                                    )),
-                                  ),
-                                  Positioned(
-                                    left: 80,
-                                    top: 83,
-                                    child: Transform(
-                                      transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(-3.14),
-                                      child: Container(
-                                        width: 67,
-                                        height: 68,
-                                        decoration: ShapeDecoration(
-                                          gradient: LinearGradient(
-                                            begin: Alignment(0.00, -1.00),
-                                            end: Alignment(0, 1),
-                                            colors: [ Color(0xFF99A897), Color(0xFF99A897)
-                                              // ,Color(0xFF50694C),Color(0xFF21411C)],
-                                          ]),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(24),
-                                          ),
-                                        ),
+                                        icon: Icon(
+                                            Icons.add_circle_outline_sharp,
+                                            color: Colors.black,
+                                            size: 20),
                                       ),
+                                    ],
+                                  )),
+                            ),
+                            Positioned(
+                              left: 310,
+                              top: 10,
+                              child: SizedBox(
+                                  width: 42.49,
+                                  height: 16.02,
+                                  child: IconButton(
+                                    onPressed: () {
+                                      if (product != null || plant != null) {
+                                        final String itemId = product != null
+                                            ? product['id']
+                                            : plant['id'];
+                                        print(itemId);
+                                        final String itemType = product != null
+                                            ? 'product'
+                                            : 'plant';
+                                        final String customerId = "1";
+                                        removeFromCart(customerId, itemId,
+                                            itemType); // Replace '1' with the actual customer ID
+                                      }
+                                    },
+                                    icon: Icon(Icons.cancel,
+                                        size: 20, color: Colors.black54),
+                                  )),
+                            ),
+                            Positioned(
+                              left: 80,
+                              top: 83,
+                              child: Transform(
+                                transform: Matrix4.identity()
+                                  ..translate(0.0, 0.0)
+                                  ..rotateZ(-3.14),
+                                child: Container(
+                                  width: 67,
+                                  height: 68,
+                                  decoration: ShapeDecoration(
+                                    gradient: LinearGradient(
+                                        begin: Alignment(0.00, -1.00),
+                                        end: Alignment(0, 1),
+                                        colors: [
+                                          Color(0xFF99A897), Color(0xFF99A897)
+                                          // ,Color(0xFF50694C),Color(0xFF21411C)],
+                                        ]),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(24),
                                     ),
                                   ),
-                                  Positioned(
-                                    left: 27,
-                                    top: 10.43,
-                                    child: Transform(
-                                      transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(-0.02),
-                                      child:  imageUrl != null
-                                          ? Image.network(
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              left: 27,
+                              top: 10.43,
+                              child: Transform(
+                                transform: Matrix4.identity()
+                                  ..translate(0.0, 0.0)
+                                  ..rotateZ(-0.02),
+                                child: imageUrl != null
+                                    ? Image.network(
                                         imageUrl,
                                         width: 38.26,
                                         height: 70.48,
                                         fit: BoxFit.fill,
                                       )
-                                          : Image.asset("assets/category/f1.png",
+                                    : Image.asset(
+                                        "assets/category/f1.png",
                                         width: 28.26,
                                         height: 63.48,
                                         fit: BoxFit.fill,
                                       ),
-                                    ),
-                                  ),
-
-
-                                ],
                               ),
-                        );
-
-
-                                },
-                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
                 ),
                 Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                Row(
-                  children: [
-                    Text(
-                    'Item Total:',
-                      style: GoogleFonts.playfairDisplay(
-                        color: Color(0xFF0D0D0D),
-                        fontSize: 18,
-                        //fontFamily: 'Playfair Display',
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(width: 180,),
-                    Text( '₹$totalItemTotal',
-                      style: GoogleFonts.acme(
-                        color: Color(0xFF0D0D0D),
-                        fontSize: 15,
-                        //fontFamily: 'Playfair Display',
-                        fontWeight: FontWeight.w400,
-                      ),),
-                  ],
-                ),
-                  SizedBox(
-                    height: 5,
-                  ),
-                  Container(
-                    width: 318,
-                    decoration: ShapeDecoration(
-                      shape: RoundedRectangleBorder(
-                        side: BorderSide(
-                          width: 0.50,
-                          //strokeAlign: BorderSide.strokeAlignCenter,
-                          color: Color(0x380D0D0D),
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    height: 10,
-                  ),
-                Row(
-                  children: [
-                    Text(
-                    'Shipping Cost:',
-                      style: GoogleFonts.playfairDisplay(
-                        color: Color(0xFF0D0D0D),
-                        fontSize: 18,
-                        //fontFamily: 'Playfair Display',
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(width: 150,),
-                    Text('₹99',
-                      style: GoogleFonts.acme(
-                        color: Color(0xFF0D0D0D),
-                        fontSize: 15,
-                        //fontFamily: 'Playfair Display',
-                        fontWeight: FontWeight.w400,
-                      ),)
-                  ],
-                ),
-                  SizedBox(
-                    height: 5,
-                  ),
-                  Container(
-                    width: 318,
-                    decoration: ShapeDecoration(
-                      shape: RoundedRectangleBorder(
-                        side: BorderSide(
-                          width: 0.50,
-                          //strokeAlign: BorderSide.strokeAlignCenter,
-                          color: Color(0x380D0D0D),
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    height: 10,
-                  ),
-                Row(
-                  children: [
-                    Text(
-                    'Bag Total:',
-                      style: GoogleFonts.playfairDisplay(
-                        color: Color(0xFF0D0D0D),
-                        fontSize: 18,
-                        //fontFamily: 'Playfair Display',
-                        fontWeight: FontWeight.w600,
-                      ),
-            ),
-                    SizedBox(width: 180,),
-                    Text(' ₹$totalBagTotal',
-                      style: GoogleFonts.acme(
-                        color: Color(0xFF0D0D0D),
-                        fontSize: 15,
-                        //fontFamily: 'Playfair Display',
-                        fontWeight: FontWeight.w400,
-                      ),)
-                  ],
-                ),
-                  SizedBox(
-                    height: 5,
-                  ),
-                  Container(
-                    width: 318,
-                    decoration: ShapeDecoration(
-                      shape: RoundedRectangleBorder(
-                        side: BorderSide(
-                          width: 0.50,
-                          //strokeAlign: BorderSide.strokeAlignCenter,
-                          color: Color(0x380D0D0D),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                 SizedBox(
-                   height: 20,
-                 ),
-                 Row(
-                   children: [
-                     SizedBox(
-                       width: 70,
-                     ),
-                     ElevatedButton(
-
-                        onPressed: (){
-                          Navigator.push(context,
-                              MaterialPageRoute(builder: (context)=>Checkout( totalBagTotal: totalBagTotal,
-                                totalShippingCost: totalShippingCost,
-                                totalItemTotal: totalItemTotal,)));
-                        },
-                        child: Text(
-                          'Checkout',
-                          style: GoogleFonts.acme(
-                            color: Colors.white.withOpacity(0.8600000143051147),
-                            fontSize: 20,
-                            //fontFamily: 'Playfair Display',
-                            fontWeight: FontWeight.w400,
+                  padding: EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'Item Total:',
+                            style: GoogleFonts.playfairDisplay(
+                              color: Color(0xFF0D0D0D),
+                              fontSize: 18,
+                              //fontFamily: 'Playfair Display',
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF3C593B),
+                          SizedBox(
+                            width: 180,
+                          ),
+                          Text(
+                            '₹$totalItemTotal',
+                            style: GoogleFonts.acme(
+                              color: Color(0xFF0D0D0D),
+                              fontSize: 15,
+                              //fontFamily: 'Playfair Display',
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(
+                        height: 5,
+                      ),
+                      Container(
+                        width: 318,
+                        decoration: ShapeDecoration(
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(10)),
-
+                            side: BorderSide(
+                              width: 0.50,
+                              //strokeAlign: BorderSide.strokeAlignCenter,
+                              color: Color(0x380D0D0D),
+                            ),
                           ),
-                          fixedSize: Size(185, 35),
-                          alignment: Alignment.center
                         ),
                       ),
-                   ],
-                 ),
-                ],
-                ),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Row(
+                        children: [
+                          Text(
+                            'Shipping Cost:',
+                            style: GoogleFonts.playfairDisplay(
+                              color: Color(0xFF0D0D0D),
+                              fontSize: 18,
+                              //fontFamily: 'Playfair Display',
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          SizedBox(
+                            width: 150,
+                          ),
+                          Text(
+                            '₹99',
+                            style: GoogleFonts.acme(
+                              color: Color(0xFF0D0D0D),
+                              fontSize: 15,
+                              //fontFamily: 'Playfair Display',
+                              fontWeight: FontWeight.w400,
+                            ),
+                          )
+                        ],
+                      ),
+                      SizedBox(
+                        height: 5,
+                      ),
+                      Container(
+                        width: 318,
+                        decoration: ShapeDecoration(
+                          shape: RoundedRectangleBorder(
+                            side: BorderSide(
+                              width: 0.50,
+                              //strokeAlign: BorderSide.strokeAlignCenter,
+                              color: Color(0x380D0D0D),
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Row(
+                        children: [
+                          Text(
+                            'Bag Total:',
+                            style: GoogleFonts.playfairDisplay(
+                              color: Color(0xFF0D0D0D),
+                              fontSize: 18,
+                              //fontFamily: 'Playfair Display',
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          SizedBox(
+                            width: 180,
+                          ),
+                          Text(
+                            ' ₹$totalBagTotal',
+                            style: GoogleFonts.acme(
+                              color: Color(0xFF0D0D0D),
+                              fontSize: 15,
+                              //fontFamily: 'Playfair Display',
+                              fontWeight: FontWeight.w400,
+                            ),
+                          )
+                        ],
+                      ),
+                      SizedBox(
+                        height: 5,
+                      ),
+                      Container(
+                        width: 318,
+                        decoration: ShapeDecoration(
+                          shape: RoundedRectangleBorder(
+                            side: BorderSide(
+                              width: 0.50,
+                              //strokeAlign: BorderSide.strokeAlignCenter,
+                              color: Color(0x380D0D0D),
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        height: 20,
+                      ),
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 70,
+                          ),
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => Checkout(
+                                            totalBagTotal: totalBagTotal,
+                                            totalShippingCost:
+                                                totalShippingCost,
+                                            totalItemTotal: totalItemTotal,
+                                          )));
+                            },
+                            child: Text(
+                              'Checkout',
+                              style: GoogleFonts.acme(
+                                color: Colors.white
+                                    .withOpacity(0.8600000143051147),
+                                fontSize: 20,
+                                //fontFamily: 'Playfair Display',
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: Color(0xFF3C593B),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(10)),
+                                ),
+                                fixedSize: Size(185, 35),
+                                alignment: Alignment.center),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ],
-            );   // Your existing layout components here
-
+            ); // Your existing layout components here
           },
         ),
       ),
     );
   }
 }
-

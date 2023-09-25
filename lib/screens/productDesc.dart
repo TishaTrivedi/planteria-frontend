@@ -4,6 +4,7 @@ import 'package:graphql/client.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
 import '../Animations/slide_animation.dart';
+import '../graphql_client.dart';
 class ProductDesc extends StatefulWidget {
   //const ProductDesc({Key? key}) : super(key: key);
 
@@ -29,8 +30,7 @@ class _ProductDescState extends State<ProductDesc> {
     });
 
   }
-
-  final HttpLink httpLink = HttpLink('http://192.168.1.112:8000/graphql/');
+  
 
   late GraphQLClient client;
 
@@ -223,7 +223,7 @@ class _ProductDescState extends State<ProductDesc> {
                                       height: 406.84,
                                       decoration: BoxDecoration(
                                         image: DecorationImage(
-                                          image: NetworkImage("http://192.168.1.112:8000/media/${products['images']}"),
+                                          image: NetworkImage("${httpLinkImage}${products['images']}"),
                                           fit: BoxFit.fill,
                                         ),
                                       ),

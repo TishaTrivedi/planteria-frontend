@@ -28,7 +28,7 @@ class _LoginState extends State<Login> {
                   begin: Offset(0, 100),   // Slide from below
                   end: Offset(0, 0),
                   child: ElevatedButton(onPressed: (){
-                  Navigator.pushReplacementNamed(context, 'bottomnavigation');
+                  Navigator.pushReplacementNamed(context, 'login2');
                   },
                     child: Text("Login",
                         style: GoogleFonts.playfairDisplay(
