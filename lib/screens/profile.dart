@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:plantbackend/screens/address.dart';
 import 'package:plantbackend/screens/wishlist.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../sharedPreferences.dart';
 
 class Profile extends StatefulWidget {
   const Profile({Key? key}) : super(key: key);
@@ -11,6 +14,16 @@ class Profile extends StatefulWidget {
 }
 
 class _ProfileState extends State<Profile> {
+
+  void _logOut() async {
+    await SharedPreferencesUtil.clearUserId();
+
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isLoggedIn', false);
+
+    Navigator.pushReplacementNamed(context, 'login');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -166,7 +179,9 @@ class _ProfileState extends State<Profile> {
             Container(
               padding: EdgeInsets.only(left: 20, right: 20),
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  _logOut();
+                },
                 child: Text(
                   "LOGOUT",
                   style: GoogleFonts.acme(

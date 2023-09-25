@@ -29,7 +29,7 @@ class _LoginState extends State<Login> {
                   end: Offset(0, 0),
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.pushReplacementNamed(context, 'login2');
+                      Navigator.pushNamed(context, 'login2');
                     },
                     child: Text("Login",
                         style: GoogleFonts.playfairDisplay(

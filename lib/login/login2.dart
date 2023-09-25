@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:graphql/client.dart';
+import 'package:plantbackend/graphql_client.dart';
 import 'package:plantbackend/login/registration.dart';
+
+import 'package:plantbackend/graphql_client.dart';
 
 import '../sharedPreferences.dart';
 
 class Login2 extends StatefulWidget {
   const Login2({Key? key}) : super(key: key);
+
+  static int userId = 0;
 
   @override
   State<Login2> createState() => _Login2State();
@@ -22,14 +28,124 @@ class _Login2State extends State<Login2> {
   }
 
   bool _isSelectedTextBox = false;
+
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _mobileNumberController = TextEditingController();
+
+  void _createUser(BuildContext context) async {
+
+    print("In Create User");
+    SharedPreferencesUtil.setString('mobileNumber', UserFormFields.userMobileNumber.toString());
+    print(UserFormFields.userName);
+    print(UserFormFields.password);
+    print(UserFormFields.userMobileNumber);
+
+    final String createUserMutation = '''
+    mutation CreateCustomerLogin(\$username: String!, \$password: String!, \$mobileNumber: String!) {
+      createCustomerLogin(username: \$username, password: \$password, mobileNumber: \$mobileNumber) {
+        customerLogin {
+          id
+          username
+          password
+          mobileNumber
+        }
+      }
+    }
+  ''';
+
+    final GraphQLClient client = GraphQLClient(
+      cache: GraphQLCache(),
+      link: httpLink, // Replace with your GraphQL API endpoint
+    );
+
+    final Map<String, dynamic> variables = {
+      'username': UserFormFields.userName.toString(),
+      'password': UserFormFields.password.toString(),
+      'mobileNumber': UserFormFields.userMobileNumber.toString(),
+    };
+
+
+    try {
+      final QueryResult result = await client.mutate(
+        MutationOptions(
+          document: gql(createUserMutation),
+          variables: variables,
+        ),
+      );
+
+      if (result.hasException) {
+        // Handle error here
+        print("Mutation error: ${result.exception}");
+
+        // Check if it's an HttpException
+        if (result.exception is HttpLinkServerException) {
+          final HttpLinkServerException httpException =
+          result.exception as HttpLinkServerException;
+          final response = httpException.response;
+          print("Response Status Code: ${response?.statusCode}");
+          print("Response Body: ${response?.body}");
+        }
+      } else {
+        // Mutation was successful, you can access data here if needed
+        print('User Created');
+        // You can access fields from responseData, e.g., responseData['id']
+      }
+    } catch (error) {
+      print("An error occurred: $error");
+    }
+  }
+
+
+
+  Future<int> _getUserId() async {
+    final GraphQLClient client = GraphQLClient(
+      cache: GraphQLCache(),
+      link: httpLink, // Replace with your GraphQL HTTP link
+    );
+
+    final String getUserQuery = '''
+    query GetUserByMobileNumber(\$mobileNumber: String!) {
+      userByMobileNumber(mobileNumber: \$mobileNumber) {
+        id
+      }
+    }
+  ''';
+
+    print('UserMobileNumber: ${UserFormFields.userMobileNumber.toString()}');
+    final QueryOptions options = QueryOptions(
+      document: gql(getUserQuery),
+      variables: {'mobileNumber': _mobileNumberController.toString()},
+    );
+
+    try {
+      final QueryResult result = await client.query(options);
+
+      if (result.hasException) {
+        throw result.exception!;
+      }
+
+      final dynamic user = result.data?['userByMobileNumber'];
+      if (user == null) {
+        return 0; // User not found
+      } else {
+        final int userId = int.parse(user['id']);
+        return userId; // User found
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      backgroundColor: Colors.black,
-      extendBodyBehindAppBar: true,
+      backgroundColor: Colors.lightGreen.shade50,
+      extendBodyBehindAppBar: false,
       appBar: AppBar(
         leading: ElevatedButton(
           onPressed: () {
@@ -46,7 +162,7 @@ class _Login2State extends State<Login2> {
             ),
             padding: const EdgeInsets.all(0),
           ),
-          child: const Icon(Icons.arrow_back),
+          child: const Icon(Icons.arrow_back, color: Colors.black,),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -54,7 +170,7 @@ class _Login2State extends State<Login2> {
       body: SizedBox(
         height: height,
         child: Padding(
-          padding: EdgeInsets.only(left: 20, right: 20, top: 80, bottom: 0),
+          padding: const EdgeInsets.only(left: 20, right: 20, top: 0, bottom: 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -63,57 +179,43 @@ class _Login2State extends State<Login2> {
                 child: Text(
                   "Create Profile",
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Colors.black,
                     fontSize: 30,
                     fontFamily: "Georgia",
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.only(
-                    left: 0, right: 0, top: 0, bottom: 10),
-                child: Container(
-                  height: 55,
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color:
-                          _isSelectedTextBox ? Colors.transparent : Colors.grey,
+              TextField(
+                controller: _usernameController, // Assign the controller
+                onTap: () {
+                  _isSelectedTextBox = true;
+                },
+                onChanged: (value) {
+                  setState(() {
+                    UserFormFields.userName = value;
+                  });
+                },
+                keyboardType: TextInputType.text,
+                style: const TextStyle(
+                  color: Colors.black,
+                ),
+                decoration: InputDecoration(
+                  labelText: 'Username',
+                  labelStyle: const TextStyle(
+                    color: Colors.black,
+                  ),
+                  border: OutlineInputBorder(
+                    borderSide: const BorderSide(
+                      color: Colors.black,
                     ),
                     borderRadius: BorderRadius.circular(15),
                   ),
-                  child: TextField(
-                    onTap: () {
-                      _isSelectedTextBox = true;
-                    },
-                    onChanged: (value) {
-                      setState(() {
-                        UserFormFields.userName = value;
-                      });
-                    },
-                    keyboardType: TextInputType.text,
-                    style: const TextStyle(
-                      color: Colors.white, // Set text color to white
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(
+                      color: Colors.black,
                     ),
-                    decoration: InputDecoration(
-                      labelText: 'Username',
-                      labelStyle: const TextStyle(
-                        color: Colors.white,
-                      ),
-                      border: OutlineInputBorder(
-                        borderSide: const BorderSide(
-                          color: Colors.white, // Set border color to grey
-                        ),
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(
-                          color: Colors
-                              .grey, // Set border color to white when focused
-                        ),
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                    ),
+                    borderRadius: BorderRadius.circular(15),
                   ),
                 ),
               ),
@@ -122,7 +224,7 @@ class _Login2State extends State<Login2> {
                 child: Text(
                   "Must be at least four characters",
                   style: TextStyle(
-                    color: Colors.grey,
+                    color: Colors.black,
                     fontSize: 15,
                     fontFamily: "Georgia",
                   ),
@@ -130,53 +232,81 @@ class _Login2State extends State<Login2> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.only(
-                    left: 0, right: 0, top: 0, bottom: 10),
-                child: Container(
-                  height: 55,
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color:
-                          _isSelectedTextBox ? Colors.transparent : Colors.grey,
-                    ),
-                    borderRadius: BorderRadius.circular(15),
+                padding: EdgeInsets.only(left: 0, right: 0, top: 0, bottom: 30),
+                child: TextFormField(
+                  controller: _passwordController, // Assign the controller
+                  onTap: () {
+                    _isSelectedTextBox = true;
+                  },
+                  onChanged: (value) {
+                    setState(() {
+                      UserFormFields.password = value;
+                    });
+                  },
+                  keyboardType: TextInputType.text,
+                  style: const TextStyle(
+                    color: Colors.black,
                   ),
-                  child: TextFormField(
-                    onTap: () {
-                      _isSelectedTextBox = true;
-                    },
-                    onChanged: (value) {
-                      setState(() {
-                        UserFormFields.password = value;
-                      });
-                    },
-                    keyboardType: TextInputType.text,
-                    style: const TextStyle(
-                      color: Colors.white, // Set text color to white
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    labelStyle: const TextStyle(
+                      color: Colors.black,
                     ),
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      labelStyle: const TextStyle(
-                        color: Colors.white,
+                    border: OutlineInputBorder(
+                      borderSide: const BorderSide(
+                        color: Colors.black,
                       ),
-                      border: OutlineInputBorder(
-                        borderSide: const BorderSide(
-                          color: Colors.white, // Set border color to grey
-                        ),
-                        borderRadius: BorderRadius.circular(15),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(
+                        color: Colors.black,
                       ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(
-                          color: Colors
-                              .grey, // Set border color to white when focused
-                        ),
-                        borderRadius: BorderRadius.circular(15),
-                      ),
+                      borderRadius: BorderRadius.circular(15),
                     ),
                   ),
                 ),
               ),
+
+              Padding(
+                padding: EdgeInsets.only(left: 0, right: 0, top: 0, bottom: 30),
+                child: TextFormField(
+                  controller: _mobileNumberController, // Assign the controller
+                  onTap: () {
+                    _isSelectedTextBox = true;
+                  },
+                  onChanged: (value) {
+                    setState(() {
+                      UserFormFields.userMobileNumber = value;
+                    });
+                  },
+                  keyboardType: TextInputType.text,
+                  style: const TextStyle(
+                    color: Colors.black,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: 'Mobile Number',
+                    labelStyle: const TextStyle(
+                      color: Colors.black,
+                    ),
+                    border: OutlineInputBorder(
+                      borderSide: const BorderSide(
+                        color: Colors.black,
+                      ),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(
+                        color: Colors.black,
+                      ),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
+                ),
+              ),
+
               Expanded(child: SizedBox()),
+
               Padding(
                 padding: const EdgeInsets.only(
                     left: 0, right: 0, top: 0, bottom: 30),
@@ -185,27 +315,33 @@ class _Login2State extends State<Login2> {
                   width: width,
                   child: ElevatedButton(
                     onPressed: () async {
-                      print(UserFormFields.userName);
-                      print(UserFormFields.userDateOfBirth);
-                      print(UserFormFields.userAddress);
-                      print(UserFormFields.userEmail);
-                      print(UserFormFields.userSex);
+
+
+                      _createUser(context);
 
                       // int userId = await _getUserId();
-                      int userId = 1;
+                      // print("User Id on call " + userId.toString());
+                      // setState(() {
+                      //   Login2.userId = userId;
+                      // });
+                      //
+                      // print(Login2.userId);
+                      //
+                      // await _storeUserId(userId);
+                      // await SharedPreferencesUtil.setBool('isLoggedIn', true);
+                      await SharedPreferencesUtil.setLoginState(true);
 
-                      await _storeUserId(userId);
-                      await SharedPreferencesUtil.setBool('isLoggedIn', true);
-
+                      print("User has been created\n\n\n\n\n\n\n\n");
+                      print(UserFormFields.userMobileNumber);
                       Navigator.pushNamed(context, 'bottomnavigation');
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.lime,
+                      backgroundColor: Color(0xFF2F482D),
                       shadowColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                         side: const BorderSide(
-                          color: Colors.lime,
+                          color: Color(0xFF2F482D),
                         ),
                       ),
                     ),
@@ -215,14 +351,14 @@ class _Login2State extends State<Login2> {
                         fontFamily: 'Georgia',
                         fontWeight: FontWeight.bold,
                         fontSize: 17,
-                        color: Colors.black,
+                        color: Colors.white,
                       ),
                     ),
                   ),
                 ),
               ),
             ],
-          ),
+          )
         ),
       ),
     );

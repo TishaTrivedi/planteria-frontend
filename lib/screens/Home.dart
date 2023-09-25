@@ -5,12 +5,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:graphql/client.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:like_button/like_button.dart';
+import 'package:plantbackend/login/registration.dart';
 import 'package:plantbackend/screens/Products.dart';
 import 'package:plantbackend/screens/productDesc.dart';
 import 'package:plantbackend/screens/soil.dart';
 import 'package:plantbackend/screens/tabView.dart';
 
 import '../graphql_client.dart';
+import '../sharedPreferences.dart';
 import 'fertilizers.dart';
 
 class HomePage extends StatefulWidget {
@@ -21,6 +23,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+
+
   late GraphQLClient client;
 
   final List<PlantsData> plantList = [
@@ -96,6 +100,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    getMobileNumber();
     client = GraphQLClient(
       link: httpLink,
       cache: GraphQLCache(),
@@ -130,44 +135,15 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    double height = MediaQuery.of(context).size.height;
+    double width = MediaQuery.of(context).size.width;
+
     return Scaffold(
       backgroundColor: Colors.lightGreen[50],
       body: SingleChildScrollView(
         child: Column(
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: EdgeInsets.only(top: 40, left: 10),
-                  alignment: Alignment.topLeft,
-                  child: Text(
-                    "Welcome",
-                    style: GoogleFonts.playfairDisplay(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20),
-                  ),
-                ),
-                Container(
-                  padding: EdgeInsets.only(top: 45, left: 5),
-                  alignment: Alignment.topLeft,
-                  child: Text(
-                    "Tisha,",
-                    style: GoogleFonts.playfairDisplay(
-                        color: Colors.black54,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20),
-                  ),
-                ),
-                Container(
-                    padding: EdgeInsets.only(top: 45, left: 140),
-                    alignment: Alignment.topLeft,
-                    child: CircleAvatar(
-                      backgroundImage: AssetImage("assets/tisha.jpg"),
-                      radius: 25,
-                    )),
-              ],
-            ),
+            _buildUserProfileNameImage(width),
             Container(
               height: 110,
               padding: EdgeInsets.only(left: 10, right: 10, top: 20),
@@ -1030,6 +1006,88 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
+  final String getUser = r'''
+    query GetCustomerByMobileNumber($mobileNumber: String!) {
+      customerLoginByMobile(mobileNumber: $mobileNumber) {
+        id
+        username
+        # Add other fields you want to retrieve
+      }
+    }
+  ''';
+
+  Future<void> getMobileNumber() async {
+    final String key = 'mobileNumber';
+    final String? mobileNumber = await SharedPreferencesUtil.getString(key);
+    print("Mobile " + mobileNumber!);
+    setState(() {
+      UserFormFields.userMobileNumber = mobileNumber ?? "";
+    });
+  }
+
+
+  Widget _buildUserProfileNameImage(double width) {
+
+    return SizedBox(
+      child: Query(
+        options: QueryOptions(
+          document: gql(getUser),
+          variables: {'mobileNumber': '${UserFormFields.userMobileNumber}'},
+        ),
+        builder: (QueryResult result, {fetchMore, refetch}) {
+          if (result.hasException) {
+            print(result.exception.toString());
+            return Center(
+              child: Text(
+                'Error fetching dishes: ${result.exception.toString()}',
+              ),
+            );
+          }
+
+          if (result.isLoading) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
+          final Map<String, dynamic>? data = result.data?['customerLoginByMobile'];
+
+          if (data == null) {
+            return const Text('No dishes found');
+          }
+
+          return Row(
+            children: [
+              Container(
+                padding: EdgeInsets.only(top: 40, left: 10),
+                alignment: Alignment.topLeft,
+                child: Text(
+                  "Welcome",
+                  style: GoogleFonts.playfairDisplay(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20),
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.only(top: 45, left: 5),
+                alignment: Alignment.topLeft,
+                child: Text(
+                  data['username'],
+                  style: GoogleFonts.playfairDisplay(
+                      color: Colors.black54,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
 }
 
 final List<Widget> onboardingPages = [

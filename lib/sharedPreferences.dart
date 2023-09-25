@@ -42,4 +42,14 @@ class SharedPreferencesUtil {
     // Set the login state to false when clearing the user ID
     await setLoginState(false);
   }
+
+  static Future<void> setString(String key, String value) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString(key, value);
+  }
+
+  static Future<String?> getString(String key) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString(key);
+  }
 }
