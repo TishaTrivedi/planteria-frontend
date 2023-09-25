@@ -84,6 +84,9 @@ class _FertilizersState extends State<Fertilizers>
 
   @override
   Widget build(BuildContext context) {
+    double height = MediaQuery.of(context).size.height;
+    double width = MediaQuery.of(context).size.width;
+
     return Container(
         child: Scaffold(
       backgroundColor: Colors.lightGreen.shade50,
@@ -102,7 +105,7 @@ class _FertilizersState extends State<Fertilizers>
             }
 
             if (result.isLoading) {
-              return Center(
+              return const Center(
                 child: CircularProgressIndicator(),
               );
             }
@@ -129,7 +132,7 @@ class _FertilizersState extends State<Fertilizers>
                                 child: Container(
                                   width: 350,
                                   height: 500,
-                                  padding: EdgeInsets.only(right: 40),
+                                  padding: const EdgeInsets.only(right: 40),
                                   child: Center(
                                     child: Text(
                                       "•	The image displayed is indicative in nature.\n•	Actual product may vary in shape or design as per the availability.\n•	The number of leaves and the size of the plant depends on seasonal availability.\n•	Since flowers are seasonal in nature, flowering plants may be delivered without the bloom. Flowers, if present in plant, may be in fully bloomed, semi-bloomed or bud stage.\n•	Pots will be provided as per the requirement of the plant.\n•	Delivery will be attempted on the same day, but there may be a delay of 3-5 hours depending on the traffic and the weather.\n•	Our courier partners do not call prior to delivering an order, so we recommend that you provide an address at which someone will be present to receive the package.\n•	The delivery, once dispatched, cannot be redirected to any other address.",
@@ -143,11 +146,11 @@ class _FertilizersState extends State<Fertilizers>
                                   ),
                                 )),
                             Positioned(
-                              left: 260.67,
+                              left: 150,
                               top: 370.79,
                               child: SizedBox(
-                                width: 230.22,
-                                height: 100.03,
+                                width: width,
+                                height: 50,
                                 child: Text(
                                   plants['plantName'],
                                   style: GoogleFonts.playfairDisplay(
@@ -155,6 +158,7 @@ class _FertilizersState extends State<Fertilizers>
                                     fontSize: 25,
                                     fontWeight: FontWeight.w500,
                                   ),
+                                  textAlign: TextAlign.center,
                                 ),
                               ),
                             ),
@@ -180,8 +184,8 @@ class _FertilizersState extends State<Fertilizers>
                               child: Container(
                                 width: 96.85,
                                 height: 97.24,
-                                decoration:
-                                    BoxDecoration(color: Color(0xFFD9D9D9)),
+                                decoration: const BoxDecoration(
+                                    color: Color(0xFFD9D9D9)),
                               ),
                             ),
                             Positioned(
@@ -239,7 +243,7 @@ class _FertilizersState extends State<Fertilizers>
                               left: 320.59,
                               top: 89.05,
                               child: SlideAnimation(
-                                duration: Duration(seconds: 1),
+                                duration: const Duration(seconds: 1),
                                 child: Container(
                                   width: 188.62,
                                   height: 286.84,
@@ -322,14 +326,14 @@ class _FertilizersState extends State<Fertilizers>
                                     final result = await client.mutate(
                                       MutationOptions(
                                         document: gql('''
-          mutation AddToWishlist(\$plantId: ID!) {
-            addPlantsToWishlist(customerId: 1, plantId: \$plantId) {
-              savedPlant {
-                id
-              }
-            }
-          }
-        '''),
+                                          mutation AddToWishlist(\$plantId: ID!) {
+                                            addPlantsToWishlist(customerId: 1, plantId: \$plantId) {
+                                              savedPlant {
+                                                id
+                                              }
+                                            }
+                                          }
+                                        '''),
                                         variables: {
                                           'plantId': plants['id'],
                                         },
@@ -345,7 +349,7 @@ class _FertilizersState extends State<Fertilizers>
                                         plantLikedStates[plants['id']] = true;
                                         ScaffoldMessenger.of(context)
                                             .showSnackBar(
-                                          SnackBar(
+                                          const SnackBar(
                                             content: Text(
                                                 'Plant added to wishlist successfully.'),
                                             duration: Duration(seconds: 2),
@@ -359,12 +363,12 @@ class _FertilizersState extends State<Fertilizers>
                                     final result = await client.mutate(
                                       MutationOptions(
                                         document: gql('''
-          mutation RemoveFromWishlist(\$plantId: ID!) {
-            removePlantsFromWishlist(customerId: 1, plantId: \$plantId) {
-              deletedCount
-            }
-          }
-        '''),
+                                          mutation RemoveFromWishlist(\$plantId: ID!) {
+                                            removePlantsFromWishlist(customerId: 1, plantId: \$plantId) {
+                                              deletedCount
+                                            }
+                                          }
+                                        '''),
                                         variables: {
                                           'plantId': plants['id'],
                                         },
@@ -380,7 +384,7 @@ class _FertilizersState extends State<Fertilizers>
                                         plantLikedStates[plants['id']] = false;
                                         ScaffoldMessenger.of(context)
                                             .showSnackBar(
-                                          SnackBar(
+                                          const SnackBar(
                                             content: Text(
                                                 'Plant removed from wishlist successfully.'),
                                             duration: Duration(seconds: 2),
@@ -404,14 +408,15 @@ class _FertilizersState extends State<Fertilizers>
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  SizedBox(
+                                  const SizedBox(
                                     height: 10,
                                   ),
                                   FractionallySizedBox(
                                     widthFactor: 0.5,
                                     child: TabBar(
                                       controller: _tabController,
-                                      physics: AlwaysScrollableScrollPhysics(),
+                                      physics:
+                                          const AlwaysScrollableScrollPhysics(),
                                       // padding: EdgeInsets.only(left: 20),
                                       indicatorColor: Colors.black12,
                                       labelStyle:
@@ -422,7 +427,7 @@ class _FertilizersState extends State<Fertilizers>
                                       unselectedLabelColor: Colors.black,
 
                                       tabs: [
-                                        Tab(
+                                        const Tab(
                                           child: SizedBox(
                                             width:
                                                 100, // Expand the width to take half of the space
@@ -435,7 +440,7 @@ class _FertilizersState extends State<Fertilizers>
                                           ),
                                         ),
                                         // Custom layout for the second tab (Plant care)
-                                        Tab(
+                                        const Tab(
                                           child: SizedBox(
                                             width:
                                                 100, // Expand the width to take half of the space
@@ -448,11 +453,11 @@ class _FertilizersState extends State<Fertilizers>
                                           ),
                                         ),
                                       ],
-                                      labelPadding:
-                                          EdgeInsets.symmetric(horizontal: 20),
+                                      labelPadding: const EdgeInsets.symmetric(
+                                          horizontal: 20),
                                     ),
                                   ),
-                                  SizedBox(
+                                  const SizedBox(
                                     height: 10,
                                   ),
                                   Container(
@@ -474,14 +479,15 @@ class _FertilizersState extends State<Fertilizers>
                                             Container(
                                               decoration: ShapeDecoration(
                                                 gradient: LinearGradient(
-                                                  begin: Alignment(0.00, -1.00),
-                                                  end: Alignment(0, 1),
+                                                  begin: const Alignment(
+                                                      0.00, -1.00),
+                                                  end: const Alignment(0, 1),
                                                   colors: [
-                                                    Color(0xFDBBDA9B)
+                                                    const Color(0xFDBBDA9B)
                                                         .withOpacity(0.4),
-                                                    Color(0xFDC8DEAE)
+                                                    const Color(0xFDC8DEAE)
                                                         .withOpacity(0.4),
-                                                    Color(0xFDE1ECD3)
+                                                    const Color(0xFDE1ECD3)
                                                         .withOpacity(0.4)
                                                   ],
                                                 ),
@@ -491,7 +497,7 @@ class _FertilizersState extends State<Fertilizers>
                                                       BorderRadius.circular(24),
                                                 ),
                                               ),
-                                              padding: EdgeInsets.only(
+                                              padding: const EdgeInsets.only(
                                                   left: 10, right: 10, top: 10),
                                               child: Text(
                                                 //textAlign: TextAlign.center,
@@ -526,16 +532,19 @@ class _FertilizersState extends State<Fertilizers>
                                                               gradient:
                                                                   LinearGradient(
                                                                 begin:
-                                                                    Alignment(
+                                                                    const Alignment(
                                                                         0.00,
                                                                         -1.00),
-                                                                end: Alignment(
-                                                                    0, 1),
+                                                                end:
+                                                                    const Alignment(
+                                                                        0, 1),
                                                                 colors: [
-                                                                  Color(0xFDEFE73B)
+                                                                  const Color(
+                                                                          0xFDEFE73B)
                                                                       .withOpacity(
                                                                           0.5),
-                                                                  Color(0xFFF5E9A3)
+                                                                  const Color(
+                                                                          0xFFF5E9A3)
                                                                       .withOpacity(
                                                                           0.5),
                                                                 ],
@@ -625,16 +634,19 @@ class _FertilizersState extends State<Fertilizers>
                                                               gradient:
                                                                   LinearGradient(
                                                                 begin:
-                                                                    Alignment(
+                                                                    const Alignment(
                                                                         0.00,
                                                                         -1.00),
-                                                                end: Alignment(
-                                                                    0, 1),
+                                                                end:
+                                                                    const Alignment(
+                                                                        0, 1),
                                                                 colors: [
-                                                                  Color(0xFD48B5AF)
+                                                                  const Color(
+                                                                          0xFD48B5AF)
                                                                       .withOpacity(
                                                                           0.4),
-                                                                  Color(0xFDA8E8E4)
+                                                                  const Color(
+                                                                          0xFDA8E8E4)
                                                                       .withOpacity(
                                                                           0.4)
                                                                 ],
@@ -724,16 +736,19 @@ class _FertilizersState extends State<Fertilizers>
                                                               gradient:
                                                                   LinearGradient(
                                                                 begin:
-                                                                    Alignment(
+                                                                    const Alignment(
                                                                         0.00,
                                                                         -1.00),
-                                                                end: Alignment(
-                                                                    0, 1),
+                                                                end:
+                                                                    const Alignment(
+                                                                        0, 1),
                                                                 colors: [
-                                                                  Color(0xFDF5890B)
+                                                                  const Color(
+                                                                          0xFDF5890B)
                                                                       .withOpacity(
                                                                           0.3),
-                                                                  Color(0xFFEFAC77)
+                                                                  const Color(
+                                                                          0xFFEFAC77)
                                                                       .withOpacity(
                                                                           0.3)
                                                                 ],
@@ -824,16 +839,19 @@ class _FertilizersState extends State<Fertilizers>
                                                               gradient:
                                                                   LinearGradient(
                                                                 begin:
-                                                                    Alignment(
+                                                                    const Alignment(
                                                                         0.00,
                                                                         -1.00),
-                                                                end: Alignment(
-                                                                    0, 1),
+                                                                end:
+                                                                    const Alignment(
+                                                                        0, 1),
                                                                 colors: [
-                                                                  Color(0xFD8979EC)
+                                                                  const Color(
+                                                                          0xFD8979EC)
                                                                       .withOpacity(
                                                                           0.3),
-                                                                  Color(0xFDBDB3F5)
+                                                                  const Color(
+                                                                          0xFDBDB3F5)
                                                                       .withOpacity(
                                                                           0.3)
                                                                 ],
@@ -958,7 +976,7 @@ class _FertilizersState extends State<Fertilizers>
                                 width: 125,
                                 height: 29.17,
                                 decoration: ShapeDecoration(
-                                  color: Color(0xFF21411C),
+                                  color: const Color(0xFF21411C),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(24),
                                   ),
@@ -977,31 +995,31 @@ class _FertilizersState extends State<Fertilizers>
                                         onPressed: () {
                                           decrement();
                                         },
-                                        icon: Icon(
+                                        icon: const Icon(
                                             Icons.remove_circle_outline_sharp,
                                             color: Colors.white,
                                             size: 20),
                                       ),
-                                      SizedBox(
+                                      const SizedBox(
                                         width: 15,
                                       ),
                                       Text(
                                         '$quant',
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                           color: Colors.white,
                                           fontSize: 20,
                                           fontFamily: 'Playfair Display',
                                           fontWeight: FontWeight.w400,
                                         ),
                                       ),
-                                      SizedBox(
+                                      const SizedBox(
                                         width: 10,
                                       ),
                                       IconButton(
                                         onPressed: () {
                                           increment();
                                         },
-                                        icon: Icon(
+                                        icon: const Icon(
                                             Icons.add_circle_outline_sharp,
                                             color: Colors.white,
                                             size: 20),
@@ -1029,7 +1047,8 @@ class _FertilizersState extends State<Fertilizers>
                                 clipBehavior: Clip.antiAlias,
                                 decoration: BoxDecoration(
                                     color: Colors.black.withOpacity(0)),
-                                child: Icon(Icons.add_circle_outline_sharp),
+                                child:
+                                    const Icon(Icons.add_circle_outline_sharp),
                               ),
                             ),
                             Positioned(
@@ -1091,12 +1110,12 @@ class _FertilizersState extends State<Fertilizers>
                                     },
                                     child: Row(
                                       children: [
-                                        Icon(
+                                        const Icon(
                                           Icons.shopping_cart,
                                           color: Colors.white,
                                           size: 18,
                                         ),
-                                        SizedBox(
+                                        const SizedBox(
                                           width: 10,
                                         ),
                                         Text(
@@ -1111,8 +1130,8 @@ class _FertilizersState extends State<Fertilizers>
                                       ],
                                     ),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Color(0xFF21411C),
-                                      minimumSize: Size(180.77, 40),
+                                      backgroundColor: const Color(0xFF21411C),
+                                      minimumSize: const Size(180.77, 40),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(24),
                                       ),

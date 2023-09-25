@@ -39,7 +39,7 @@ void main() async {
       child: CacheProvider(
           child: MaterialApp(
         debugShowCheckedModeBanner: false,
-            initialRoute: isLoggedIn ? 'bottomnavigation' : 'login',
+        initialRoute: isLoggedIn ? 'bottomnavigation' : 'login',
         routes: {
           'splash': (context) => SplashScreen(),
           'login': (context) => Login(),

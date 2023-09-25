@@ -109,7 +109,7 @@ class _ShoppingCartState extends State<ShoppingCart> {
     } else {
       // Check the result and perform actions accordingly
       final int increasedQuantity =
-      result.data?['increaseCartItemQuantity']['cartItem']['quantity'];
+          result.data?['increaseCartItemQuantity']['cartItem']['quantity'];
 
       if (increasedQuantity != null) {
         // Item quantity was successfully increased
@@ -132,13 +132,12 @@ class _ShoppingCartState extends State<ShoppingCart> {
     }
   }
 
-
-
   Future<void> decreaseQuantity(int customerId, int cartId) async {
     print("Cart Id " + cartId.toString());
     print("In Decrease Quantity");
     final MutationOptions options = MutationOptions(
-      document: gql(subtractQuantityFromCart), // Use the correct mutation name for decreasing
+      document: gql(
+          subtractQuantityFromCart), // Use the correct mutation name for decreasing
       variables: {
         'customerId': customerId,
         'cartItemId': cartId,
@@ -154,7 +153,7 @@ class _ShoppingCartState extends State<ShoppingCart> {
     } else {
       // Check the result and perform actions accordingly
       final int decreasedQuantity =
-      result.data?['decreaseCartItemQuantity']['cartItem']['quantity'];
+          result.data?['decreaseCartItemQuantity']['cartItem']['quantity'];
 
       if (decreasedQuantity != null) {
         // Item quantity was successfully decreased
@@ -176,7 +175,6 @@ class _ShoppingCartState extends State<ShoppingCart> {
       }
     }
   }
-
 
   Future<void> removeFromCart(
       String customerId, String itemId, String itemType) async {
@@ -452,13 +450,17 @@ class _ShoppingCartState extends State<ShoppingCart> {
                                     children: [
                                       IconButton(
                                         onPressed: () {
-                                          if (product != null || plant != null) {
+                                          if (product != null ||
+                                              plant != null) {
                                             if (cartItem != null) {
-                                              final int? itemId = int.tryParse(cartItem['id']);
+                                              final int? itemId =
+                                                  int.tryParse(cartItem['id']);
                                               if (itemId != null) {
                                                 print("Id of Item: $itemId");
-                                                final int customerId = 1; // Replace '1' with the actual customer ID
-                                                decreaseQuantity(customerId, itemId);
+                                                final int customerId =
+                                                    1; // Replace '1' with the actual customer ID
+                                                decreaseQuantity(
+                                                    customerId, itemId);
                                               } else {
                                                 print("Invalid item ID");
                                               }
@@ -483,13 +485,17 @@ class _ShoppingCartState extends State<ShoppingCart> {
                                       ),
                                       IconButton(
                                         onPressed: () {
-                                          if (product != null || plant != null) {
+                                          if (product != null ||
+                                              plant != null) {
                                             if (cartItem != null) {
-                                              final int? itemId = int.tryParse(cartItem['id']);
+                                              final int? itemId =
+                                                  int.tryParse(cartItem['id']);
                                               if (itemId != null) {
                                                 print("Id of Item: $itemId");
-                                                final int customerId = 1; // Replace '1' with the actual customer ID
-                                                increaseQuantity(customerId, itemId);
+                                                final int customerId =
+                                                    1; // Replace '1' with the actual customer ID
+                                                increaseQuantity(
+                                                    customerId, itemId);
                                               } else {
                                                 print("Invalid item ID");
                                               }

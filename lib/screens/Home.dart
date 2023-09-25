@@ -278,7 +278,6 @@ class _HomePageState extends State<HomePage> {
                               break;
                           }
                         },
-
                         child: Column(
                           children: [
                             Positioned(
@@ -286,33 +285,34 @@ class _HomePageState extends State<HomePage> {
                               top: 14,
                               child: Stack(
                                 children: [
-                                      Positioned(
-                                        left: 70,
-                                        top: 80,
-                                        child: Transform(
-                                          transform: Matrix4.identity()
-                                            ..translate(0.0, 0.0)
-                                            ..rotateZ(-3.14),
-                                          child: Container(
-                                            width: 70,
-                                            height: 70,
-                                            decoration: ShapeDecoration(
-                                              gradient: LinearGradient(
-                                                begin: Alignment(0.00, -1.00),
-                                                end: Alignment(0, 1),
-                                                colors: [
-                                                  Color(0xFF21411C),
-                                                  Color(0xFF50694C),
-                                                  Color(0xFF99A897),
-                                                ],
-                                              ),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(24),
-                                              ),
-                                            ),
+                                  Positioned(
+                                    left: 70,
+                                    top: 80,
+                                    child: Transform(
+                                      transform: Matrix4.identity()
+                                        ..translate(0.0, 0.0)
+                                        ..rotateZ(-3.14),
+                                      child: Container(
+                                        width: 70,
+                                        height: 70,
+                                        decoration: ShapeDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment(0.00, -1.00),
+                                            end: Alignment(0, 1),
+                                            colors: [
+                                              Color(0xFF21411C),
+                                              Color(0xFF50694C),
+                                              Color(0xFF99A897),
+                                            ],
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(24),
                                           ),
                                         ),
                                       ),
+                                    ),
+                                  ),
                                   Container(
                                     width: 70,
                                     height: 80,
@@ -498,7 +498,68 @@ class _HomePageState extends State<HomePage> {
                                       decoration: BoxDecoration(
                                           color: Colors.black.withOpacity(0)),
                                       child: IconButton(
-                                        onPressed: () {},
+                                        onPressed: () async {
+                                          final itemId = product != null
+                                              ? product['id']
+                                              : plant['id'];
+                                          final itemType = product != null
+                                              ? 'product'
+                                              : 'plant';
+                                          final quantity =
+                                              1; // You can adjust the quantity as needed
+
+                                          final addToCartMutation = gql('''
+      mutation AddToCart(\$customerId: ID!, \$itemId: ID!, \$itemType: String!, \$quantity: Int!) {
+        addToCart(customerId: \$customerId, itemId: \$itemId, itemType: \$itemType, quantity: \$quantity) {
+          savedProduct {
+            id
+            # Add other fields you want to retrieve
+          }
+        }
+      }
+    ''');
+
+                                          try {
+                                            final result = await client.mutate(
+                                              MutationOptions(
+                                                document: addToCartMutation,
+                                                variables: {
+                                                  'customerId':
+                                                      1, // Replace with the actual customer ID
+                                                  'itemId': itemId,
+                                                  'itemType': itemType,
+                                                  'quantity': quantity,
+                                                },
+                                              ),
+                                            );
+
+                                            if (result.hasException) {
+                                              // Handle the error here.
+                                              print(
+                                                  'Error: ${result.exception.toString()}');
+                                              // You can also show an error message to the user.
+                                            } else {
+                                              // Product/plant added to cart successfully.
+                                              // You can update the UI or show a confirmation message.
+                                              print('Item added to cart.');
+
+                                              // Show a Snackbar with the success message
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(
+                                                SnackBar(
+                                                  content: Text(
+                                                      'Item added to cart successfully.'),
+                                                  duration: Duration(
+                                                      seconds:
+                                                          2), // You can adjust the duration
+                                                ),
+                                              );
+                                            }
+                                          } catch (error) {
+                                            // Handle any unexpected errors here.
+                                            print('Unexpected error: $error');
+                                          }
+                                        },
                                         icon: Icon(Icons.shopping_cart),
                                         color: Colors.white
                                             .withOpacity(0.7400000095367432),

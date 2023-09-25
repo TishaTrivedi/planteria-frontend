@@ -110,7 +110,11 @@ class _WishListState extends State<WishList> {
                         margin: EdgeInsets.symmetric(horizontal: 10),
                         child: GestureDetector(
                             onTap: () {
-                              Navigator.push(context, MaterialPageRoute(builder: (context)=>Fertilizers(plantId: plant['id'])));
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          Fertilizers(plantId: plant['id'])));
                               // Handle plant item click
                             },
                             child: Stack(
@@ -454,7 +458,11 @@ class _WishListState extends State<WishList> {
                         margin: EdgeInsets.symmetric(horizontal: 10),
                         child: GestureDetector(
                             onTap: () {
-                              Navigator.push(context, MaterialPageRoute(builder: (context)=>ProductDesc(productId: product['id'])));
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => ProductDesc(
+                                          productId: product['id'])));
                               // Handle product item click
                             },
                             child: Stack(

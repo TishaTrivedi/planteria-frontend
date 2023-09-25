@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:plantbackend/screens/checkout.dart';
 import 'package:plantbackend/screens/confirmOrder.dart';
 import 'package:upi_india/upi_india.dart';
+
 class Payment extends StatefulWidget {
   //const Payment({Key? key}) : super(key: key);
   final int totalBagTotal;
@@ -81,25 +82,27 @@ class _PaymentState extends State<Payment> {
                   gradient: LinearGradient(
                     begin: Alignment(0.00, -1.00),
                     end: Alignment(0, 1),
-                    colors: [Color(0xFF21411C), Color(0xFF50694C),Color(0xFF99A897),],
+                    colors: [
+                      Color(0xFF21411C),
+                      Color(0xFF50694C),
+                      Color(0xFF99A897),
+                    ],
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24),
                   ),
                 ),
                 child: ElevatedButton(
-                  onPressed: (){
+                  onPressed: () {
                     initiateTransaction(app);
                     //Navigator.push(context,MaterialPageRoute(builder: (context)=>Checkout()));
                   },
                   child: Column(
                     children: [
-                      Image.asset("assets/onBoard/gpay.png",
-                          height: 150),
+                      Image.asset("assets/onBoard/gpay.png", height: 150),
                       SizedBox(
                         width: 250,
-
-                        child:  Text(
+                        child: Text(
                           'Pay Online',
                           textAlign: TextAlign.center,
                           style: GoogleFonts.playfairDisplay(
@@ -110,7 +113,6 @@ class _PaymentState extends State<Payment> {
                           ),
                         ),
                       ),
-
                     ],
                   ),
                   style: ElevatedButton.styleFrom(
@@ -167,14 +169,13 @@ class _PaymentState extends State<Payment> {
           Text("$title: ", style: header),
           Flexible(
               child: Text(
-                body,
-                style: value,
-              )),
+            body,
+            style: value,
+          )),
         ],
       ),
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -187,17 +188,17 @@ class _PaymentState extends State<Payment> {
         backgroundColor: Colors.lightGreen.shade50,
         appBar: AppBar(
           backgroundColor: Color(0xFF3C593B),
-          title: Text("Payment Method",
+          title: Text(
+            "Payment Method",
             style: GoogleFonts.lora(
               fontWeight: FontWeight.w600,
-            ),),
+            ),
+          ),
           leading: IconButton(
-              onPressed: (){
+              onPressed: () {
                 Navigator.pop(context);
-
               },
               icon: Icon(Icons.arrow_back)),
-
           shadowColor: Color(0xFF2F482D),
         ),
         body: Container(
@@ -207,7 +208,6 @@ class _PaymentState extends State<Payment> {
           decoration: BoxDecoration(color: Colors.white),
           child: Stack(
             children: [
-
               Positioned(
                 left: -22,
                 top: -6,
@@ -226,7 +226,6 @@ class _PaymentState extends State<Payment> {
                   decoration: BoxDecoration(color: Color(0xF7D5E2D3)),
                 ),
               ),
-
               Positioned(
                 left: 33,
                 top: 94,
@@ -248,7 +247,7 @@ class _PaymentState extends State<Payment> {
                   width: 280,
                   height: 50,
                   decoration: ShapeDecoration(
-                   //color: Color(0x444F684B),
+                    //color: Color(0x444F684B),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -257,7 +256,7 @@ class _PaymentState extends State<Payment> {
               ),
               Positioned(
                 left: 10,
-                top:62,
+                top: 62,
                 child: Container(
                   width: 165,
                   height: 200,
@@ -265,24 +264,29 @@ class _PaymentState extends State<Payment> {
                     gradient: LinearGradient(
                       begin: Alignment(0.00, -1.00),
                       end: Alignment(0, 1),
-                      colors: [Color(0xFF21411C), Color(0xFF50694C),Color(0xFF99A897),],
+                      colors: [
+                        Color(0xFF21411C),
+                        Color(0xFF50694C),
+                        Color(0xFF99A897),
+                      ],
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
                     ),
                   ),
                   child: ElevatedButton(
-                    onPressed: (){
-                      Navigator.push(context,MaterialPageRoute(builder: (context)=>ConfirmOrder()));
+                    onPressed: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => ConfirmOrder()));
                     },
                     child: Column(
                       children: [
-                        Image.asset("assets/onBoard/cod.png",
-                            height: 150),
+                        Image.asset("assets/onBoard/cod.png", height: 150),
                         SizedBox(
                           width: 250,
-
-                          child:  Text(
+                          child: Text(
                             'Cash On Delivery',
                             style: GoogleFonts.playfairDisplay(
                               color: Colors.white,
@@ -292,7 +296,6 @@ class _PaymentState extends State<Payment> {
                             ),
                           ),
                         ),
-
                       ],
                     ),
                     style: ElevatedButton.styleFrom(
@@ -305,65 +308,77 @@ class _PaymentState extends State<Payment> {
                 ),
               ),
               Positioned(
-                left:189,
-                top: 62,
-                child: SizedBox(
-                  width: 165,
-                  height: 500,
-                  child: Column(
-                    children: <Widget>[
-                      Expanded(
-                        child: displayUpiApps(),
-                      ),
-                      Expanded(
-                        child: FutureBuilder(
-                          future: _transaction,
-                          builder: (BuildContext context, AsyncSnapshot<UpiResponse> snapshot) {
-                            if (snapshot.connectionState == ConnectionState.done) {
-                              if (snapshot.hasError) {
-                                return Center(
-                                  child: Text(
-                                    _upiErrorHandler(snapshot.error.runtimeType),
-                                    style: header,
-                                  ), // Print's text message on screen
-                                );
-                              }
-
-                              // If we have data then definitely we will have UpiResponse.
-                              // It cannot be null
-                              UpiResponse _upiResponse = snapshot.data!;
-
-                              // Data in UpiResponse can be null. Check before printing
-                              String txnId = _upiResponse.transactionId ?? 'N/A';
-                              String resCode = _upiResponse.responseCode ?? 'N/A';
-                              String txnRef = _upiResponse.transactionRefId ?? 'N/A';
-                              String status = _upiResponse.status ?? 'N/A';
-                              String approvalRef = _upiResponse.approvalRefNo ?? 'N/A';
-                              _checkTxnStatus(status);
-
-                              return Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: <Widget>[
-                                    displayTransactionData('Transaction Id', txnId),
-                                    displayTransactionData('Response Code', resCode),
-                                    displayTransactionData('Reference Id', txnRef),
-                                    displayTransactionData('Status', status.toUpperCase()),
-                                    displayTransactionData('Approval No', approvalRef),
-                                  ],
-                                ),
-                              );
-                            } else
-                              return Center(
-                                child: Text(''),
-                              );
-                          },
+                  left: 189,
+                  top: 62,
+                  child: SizedBox(
+                    width: 165,
+                    height: 500,
+                    child: Column(
+                      children: <Widget>[
+                        Expanded(
+                          child: displayUpiApps(),
                         ),
-                      )
-                    ],
-                  ),
-                )
+                        Expanded(
+                          child: FutureBuilder(
+                            future: _transaction,
+                            builder: (BuildContext context,
+                                AsyncSnapshot<UpiResponse> snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.done) {
+                                if (snapshot.hasError) {
+                                  return Center(
+                                    child: Text(
+                                      _upiErrorHandler(
+                                          snapshot.error.runtimeType),
+                                      style: header,
+                                    ), // Print's text message on screen
+                                  );
+                                }
+
+                                // If we have data then definitely we will have UpiResponse.
+                                // It cannot be null
+                                UpiResponse _upiResponse = snapshot.data!;
+
+                                // Data in UpiResponse can be null. Check before printing
+                                String txnId =
+                                    _upiResponse.transactionId ?? 'N/A';
+                                String resCode =
+                                    _upiResponse.responseCode ?? 'N/A';
+                                String txnRef =
+                                    _upiResponse.transactionRefId ?? 'N/A';
+                                String status = _upiResponse.status ?? 'N/A';
+                                String approvalRef =
+                                    _upiResponse.approvalRefNo ?? 'N/A';
+                                _checkTxnStatus(status);
+
+                                return Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: <Widget>[
+                                      displayTransactionData(
+                                          'Transaction Id', txnId),
+                                      displayTransactionData(
+                                          'Response Code', resCode),
+                                      displayTransactionData(
+                                          'Reference Id', txnRef),
+                                      displayTransactionData(
+                                          'Status', status.toUpperCase()),
+                                      displayTransactionData(
+                                          'Approval No', approvalRef),
+                                    ],
+                                  ),
+                                );
+                              } else
+                                return Center(
+                                  child: Text(''),
+                                );
+                            },
+                          ),
+                        )
+                      ],
+                    ),
+                  )
                   // Container(
                   //   width: 165,
                   //   height: 200,
@@ -411,8 +426,7 @@ class _PaymentState extends State<Payment> {
                   //     ),
                   //   ),
                   // ),
-                ),
-
+                  ),
               Positioned(
                 left: 19,
                 top: 412,
@@ -472,7 +486,7 @@ class _PaymentState extends State<Payment> {
                     shape: RoundedRectangleBorder(
                       side: BorderSide(
                         width: 0.50,
-                       // strokeAlign: BorderSide.strokeAlignCenter,
+                        // strokeAlign: BorderSide.strokeAlignCenter,
                         color: Color(0x380D0D0D),
                       ),
                     ),
@@ -490,7 +504,7 @@ class _PaymentState extends State<Payment> {
                     style: GoogleFonts.playfairDisplay(
                       color: Color(0xFF0D0D0D),
                       fontSize: 15,
-                     // fontFamily: 'Playfair Display',
+                      // fontFamily: 'Playfair Display',
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -519,7 +533,7 @@ class _PaymentState extends State<Payment> {
                   width: 42.49,
                   height: 16.02,
                   child: Text(
-                    '₹'+itemTotal.toString(),
+                    '₹' + itemTotal.toString(),
                     textAlign: TextAlign.center,
                     style: GoogleFonts.acme(
                       color: Color(0xFF0D0D0D),
@@ -537,12 +551,12 @@ class _PaymentState extends State<Payment> {
                   width: 42.49,
                   height: 16.02,
                   child: Text(
-                    '₹'+shippingCost.toString(),
+                    '₹' + shippingCost.toString(),
                     textAlign: TextAlign.center,
                     style: GoogleFonts.acme(
                       color: Color(0xFF0D0D0D),
                       fontSize: 15.50,
-                     // fontFamily: 'Acme',
+                      // fontFamily: 'Acme',
                       fontWeight: FontWeight.w400,
                     ),
                   ),
@@ -555,9 +569,9 @@ class _PaymentState extends State<Payment> {
                   width: 42.49,
                   height: 16.02,
                   child: Text(
-                    '₹'+bagTotal.toString(),
+                    '₹' + bagTotal.toString(),
                     textAlign: TextAlign.center,
-                    style:GoogleFonts.acme(
+                    style: GoogleFonts.acme(
                       color: Color(0xFF0D0D0D),
                       fontSize: 15.50,
                       //fontFamily: 'Acme',
@@ -569,7 +583,6 @@ class _PaymentState extends State<Payment> {
             ],
           ),
         ),
-
       ),
     );
   }
