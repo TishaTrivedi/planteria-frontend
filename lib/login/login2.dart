@@ -17,6 +17,8 @@ class Login2 extends StatefulWidget {
 }
 
 class _Login2State extends State<Login2> {
+  final _formKey = GlobalKey<FormState>();
+
   Future<void> _storeUserId(int userId) async {
     try {
       // Use your shared preferences utility to store the user ID
@@ -34,9 +36,9 @@ class _Login2State extends State<Login2> {
   final TextEditingController _mobileNumberController = TextEditingController();
 
   void _createUser(BuildContext context) async {
-
     print("In Create User");
-    SharedPreferencesUtil.setString('mobileNumber', UserFormFields.userMobileNumber.toString());
+    SharedPreferencesUtil.setString(
+        'mobileNumber', UserFormFields.userMobileNumber.toString());
     print(UserFormFields.userName);
     print(UserFormFields.password);
     print(UserFormFields.userMobileNumber);
@@ -65,7 +67,6 @@ class _Login2State extends State<Login2> {
       'mobileNumber': UserFormFields.userMobileNumber.toString(),
     };
 
-
     try {
       final QueryResult result = await client.mutate(
         MutationOptions(
@@ -81,7 +82,7 @@ class _Login2State extends State<Login2> {
         // Check if it's an HttpException
         if (result.exception is HttpLinkServerException) {
           final HttpLinkServerException httpException =
-          result.exception as HttpLinkServerException;
+              result.exception as HttpLinkServerException;
           final response = httpException.response;
           print("Response Status Code: ${response?.statusCode}");
           print("Response Body: ${response?.body}");
@@ -95,8 +96,6 @@ class _Login2State extends State<Login2> {
       print("An error occurred: $error");
     }
   }
-
-
 
   Future<int> _getUserId() async {
     final GraphQLClient client = GraphQLClient(
@@ -137,7 +136,6 @@ class _Login2State extends State<Login2> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     double height = MediaQuery.of(context).size.height;
@@ -162,7 +160,10 @@ class _Login2State extends State<Login2> {
             ),
             padding: const EdgeInsets.all(0),
           ),
-          child: const Icon(Icons.arrow_back, color: Colors.black,),
+          child: const Icon(
+            Icons.arrow_back,
+            color: Colors.black,
+          ),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -170,197 +171,389 @@ class _Login2State extends State<Login2> {
       body: SizedBox(
         height: height,
         child: Padding(
-          padding: const EdgeInsets.only(left: 20, right: 20, top: 0, bottom: 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Padding(
-                padding: EdgeInsets.only(left: 0, right: 0, top: 0, bottom: 30),
-                child: Text(
-                  "Create Profile",
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 30,
-                    fontFamily: "Georgia",
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              TextField(
-                controller: _usernameController, // Assign the controller
-                onTap: () {
-                  _isSelectedTextBox = true;
-                },
-                onChanged: (value) {
-                  setState(() {
-                    UserFormFields.userName = value;
-                  });
-                },
-                keyboardType: TextInputType.text,
-                style: const TextStyle(
-                  color: Colors.black,
-                ),
-                decoration: InputDecoration(
-                  labelText: 'Username',
-                  labelStyle: const TextStyle(
-                    color: Colors.black,
-                  ),
-                  border: OutlineInputBorder(
-                    borderSide: const BorderSide(
-                      color: Colors.black,
-                    ),
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(
-                      color: Colors.black,
-                    ),
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                ),
-              ),
-              const Padding(
-                padding: EdgeInsets.only(left: 0, right: 0, top: 0, bottom: 30),
-                child: Text(
-                  "Must be at least four characters",
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 15,
-                    fontFamily: "Georgia",
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.only(left: 0, right: 0, top: 0, bottom: 30),
-                child: TextFormField(
-                  controller: _passwordController, // Assign the controller
-                  onTap: () {
-                    _isSelectedTextBox = true;
-                  },
-                  onChanged: (value) {
-                    setState(() {
-                      UserFormFields.password = value;
-                    });
-                  },
-                  keyboardType: TextInputType.text,
-                  style: const TextStyle(
-                    color: Colors.black,
-                  ),
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    labelStyle: const TextStyle(
-                      color: Colors.black,
-                    ),
-                    border: OutlineInputBorder(
-                      borderSide: const BorderSide(
-                        color: Colors.black,
-                      ),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(
-                        color: Colors.black,
-                      ),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
-                ),
-              ),
-
-              Padding(
-                padding: EdgeInsets.only(left: 0, right: 0, top: 0, bottom: 30),
-                child: TextFormField(
-                  controller: _mobileNumberController, // Assign the controller
-                  onTap: () {
-                    _isSelectedTextBox = true;
-                  },
-                  onChanged: (value) {
-                    setState(() {
-                      UserFormFields.userMobileNumber = value;
-                    });
-                  },
-                  keyboardType: TextInputType.text,
-                  style: const TextStyle(
-                    color: Colors.black,
-                  ),
-                  decoration: InputDecoration(
-                    labelText: 'Mobile Number',
-                    labelStyle: const TextStyle(
-                      color: Colors.black,
-                    ),
-                    border: OutlineInputBorder(
-                      borderSide: const BorderSide(
-                        color: Colors.black,
-                      ),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(
-                        color: Colors.black,
-                      ),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
-                ),
-              ),
-
-              Expanded(child: SizedBox()),
-
-              Padding(
-                padding: const EdgeInsets.only(
-                    left: 0, right: 0, top: 0, bottom: 30),
-                child: SizedBox(
-                  height: 45,
-                  width: width,
-                  child: ElevatedButton(
-                    onPressed: () async {
-
-
-                      _createUser(context);
-
-                      // int userId = await _getUserId();
-                      // print("User Id on call " + userId.toString());
-                      // setState(() {
-                      //   Login2.userId = userId;
-                      // });
-                      //
-                      // print(Login2.userId);
-                      //
-                      // await _storeUserId(userId);
-                      // await SharedPreferencesUtil.setBool('isLoggedIn', true);
-                      await SharedPreferencesUtil.setLoginState(true);
-
-                      print("User has been created\n\n\n\n\n\n\n\n");
-                      print(UserFormFields.userMobileNumber);
-                      Navigator.pushNamed(context, 'bottomnavigation');
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF2F482D),
-                      shadowColor: Colors.transparent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                        side: const BorderSide(
-                          color: Color(0xFF2F482D),
+            padding:
+                const EdgeInsets.only(left: 20, right: 20, top: 0, bottom: 0),
+            child: SingleChildScrollView(
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(
+                          left: 0, right: 0, top: 0, bottom: 30),
+                      child: Text(
+                        "Create Profile",
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 30,
+                          fontFamily: "Georgia",
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                    child: const Text(
-                      'Login',
-                      style: TextStyle(
-                        fontFamily: 'Georgia',
-                        fontWeight: FontWeight.bold,
-                        fontSize: 17,
-                        color: Colors.white,
+                    // TextField(
+                    //   controller: _usernameController, // Assign the controller
+                    //   onTap: () {
+                    //     _isSelectedTextBox = true;
+                    //   },
+                    //   onChanged: (value) {
+                    //     setState(() {
+                    //       UserFormFields.userName = value;
+                    //     });
+                    //   },
+                    //   keyboardType: TextInputType.text,
+                    //   style: const TextStyle(
+                    //     color: Colors.black,
+                    //   ),
+                    //   decoration: InputDecoration(
+                    //     labelText: 'Username',
+                    //     labelStyle: const TextStyle(
+                    //       color: Colors.black,
+                    //     ),
+                    //     border: OutlineInputBorder(
+                    //       borderSide: const BorderSide(
+                    //         color: Colors.black,
+                    //       ),
+                    //       borderRadius: BorderRadius.circular(15),
+                    //     ),
+                    //     focusedBorder: OutlineInputBorder(
+                    //       borderSide: const BorderSide(
+                    //         color: Colors.black,
+                    //       ),
+                    //       borderRadius: BorderRadius.circular(15),
+                    //     ),
+                    //   ),
+                    // ),
+                    Padding(
+                      padding: EdgeInsets.only(
+                          left: 0, right: 0, top: 0, bottom: 30),
+                      child: TextFormField(
+                        controller: _usernameController,
+                        onTap: () {
+                          _isSelectedTextBox = true;
+                        },
+                        onChanged: (value) {
+                          setState(() {
+                            UserFormFields.userName = value;
+                          });
+                        },
+                        keyboardType: TextInputType.text,
+                        style: const TextStyle(
+                          color: Colors.black,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: 'Username',
+                          labelStyle: const TextStyle(
+                            color: Colors.black,
+                          ),
+                          border: OutlineInputBorder(
+                            borderSide: const BorderSide(
+                              color: Colors.black,
+                            ),
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: const BorderSide(
+                              color: Colors.black,
+                            ),
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                        ),
+                        // Validation logic for the username
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Username is required';
+                          } else if (value.length < 8) {
+                            return 'Username must be at least 8 characters';
+                          }
+                          return null; // No validation error
+                        },
                       ),
                     ),
-                  ),
+
+                    // Padding(
+                    //   padding: EdgeInsets.only(left: 0, right: 0, top: 0, bottom: 30),
+                    //   child: TextFormField(
+                    //     controller: _passwordController, // Assign the controller
+                    //     onTap: () {
+                    //       _isSelectedTextBox = true;
+                    //     },
+                    //     onChanged: (value) {
+                    //       setState(() {
+                    //         UserFormFields.password = value;
+                    //       });
+                    //     },
+                    //     keyboardType: TextInputType.text,
+                    //     style: const TextStyle(
+                    //       color: Colors.black,
+                    //     ),
+                    //     decoration: InputDecoration(
+                    //       labelText: 'Password',
+                    //       labelStyle: const TextStyle(
+                    //         color: Colors.black,
+                    //       ),
+                    //       border: OutlineInputBorder(
+                    //         borderSide: const BorderSide(
+                    //           color: Colors.black,
+                    //         ),
+                    //         borderRadius: BorderRadius.circular(15),
+                    //       ),
+                    //       focusedBorder: OutlineInputBorder(
+                    //         borderSide: const BorderSide(
+                    //           color: Colors.black,
+                    //         ),
+                    //         borderRadius: BorderRadius.circular(15),
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ),
+
+                    Padding(
+                      padding:
+                          EdgeInsets.only(left: 0, right: 0, top: 0, bottom: 0),
+                      child: TextFormField(
+                        controller: _passwordController,
+                        onTap: () {
+                          _isSelectedTextBox = true;
+                        },
+                        onChanged: (value) {
+                          setState(() {
+                            UserFormFields.password = value;
+                          });
+                        },
+                        keyboardType: TextInputType.text,
+                        obscureText: true, // Hide the password characters
+                        style: const TextStyle(
+                          color: Colors.black,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          labelStyle: const TextStyle(
+                            color: Colors.black,
+                          ),
+                          border: OutlineInputBorder(
+                            borderSide: const BorderSide(
+                              color: Colors.black,
+                            ),
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: const BorderSide(
+                              color: Colors.black,
+                            ),
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                        ),
+                        // Validation logic for the password
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Password is required';
+                          } else if (value.length < 8) {
+                            return 'Password must be at least 8 characters';
+                          }
+                          return null; // No validation error
+                        },
+                      ),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.only(
+                          left: 0, right: 0, top: 0, bottom: 30),
+                      child: Text(
+                        "Must be at least eight characters",
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 15,
+                          fontFamily: "Georgia",
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+
+                    // Padding(
+                    //   padding: EdgeInsets.only(left: 0, right: 0, top: 0, bottom: 30),
+                    //   child: TextFormField(
+                    //     controller: _mobileNumberController, // Assign the controller
+                    //     onTap: () {
+                    //       _isSelectedTextBox = true;
+                    //     },
+                    //     onChanged: (value) {
+                    //       setState(() {
+                    //         UserFormFields.userMobileNumber = value;
+                    //       });
+                    //     },
+                    //     keyboardType: TextInputType.number,
+                    //     style: const TextStyle(
+                    //       color: Colors.black,
+                    //     ),
+                    //     decoration: InputDecoration(
+                    //       labelText: 'Mobile Number',
+                    //       labelStyle: const TextStyle(
+                    //         color: Colors.black,
+                    //       ),
+                    //       border: OutlineInputBorder(
+                    //         borderSide: const BorderSide(
+                    //           color: Colors.black,
+                    //         ),
+                    //         borderRadius: BorderRadius.circular(15),
+                    //       ),
+                    //       focusedBorder: OutlineInputBorder(
+                    //         borderSide: const BorderSide(
+                    //           color: Colors.black,
+                    //         ),
+                    //         borderRadius: BorderRadius.circular(15),
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ),
+
+                    Padding(
+                      padding:
+                          EdgeInsets.only(left: 0, right: 0, top: 0, bottom: 0),
+                      child: TextFormField(
+                        controller: _mobileNumberController,
+                        onTap: () {
+                          _isSelectedTextBox = true;
+                        },
+                        onChanged: (value) {
+                          setState(() {
+                            UserFormFields.userMobileNumber = value;
+                          });
+                        },
+                        keyboardType: TextInputType.number,
+                        style: const TextStyle(
+                          color: Colors.black,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: 'Mobile Number',
+                          labelStyle: const TextStyle(
+                            color: Colors.black,
+                          ),
+                          border: OutlineInputBorder(
+                            borderSide: const BorderSide(
+                              color: Colors.black,
+                            ),
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: const BorderSide(
+                              color: Colors.black,
+                            ),
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                        ),
+                        // Validation logic for the mobile number
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Mobile number is required';
+                          } else if (!RegExp(r'^[0-9]{10}$').hasMatch(value)) {
+                            return 'Mobile number must be 10 digits';
+                          }
+                          return null; // No validation error
+                        },
+                      ),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.only(
+                          left: 0, right: 0, top: 0, bottom: 30),
+                      child: Text(
+                        "Enter ten digit mobile number",
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 15,
+                          fontFamily: "Georgia",
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+
+                    Padding(
+                      padding: const EdgeInsets.only(
+                          left: 0, right: 0, top: 0, bottom: 30),
+                      child: SizedBox(
+                        height: 45,
+                        width: width,
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            print('clicked \n\n\n\n\n\n');
+                            if (_formKey.currentState!.validate()) {
+                              // If the form is valid, execute your logic
+                              _createUser(context);
+                              await SharedPreferencesUtil.setLoginState(true);
+                              print("User has been created\n\n\n\n\n\n\n\n");
+                              print(UserFormFields.userMobileNumber);
+                              Navigator.pushNamed(context, 'bottomnavigation');
+                            } else {
+                              print("Alert");
+                              showAlertDialog(
+                                  context, 'Please fill in all fields.');
+                            }
+
+                            // _createUser(context);
+                            //
+                            // // int userId = await _getUserId();
+                            // // print("User Id on call " + userId.toString());
+                            // // setState(() {
+                            // //   Login2.userId = userId;
+                            // // });
+                            // //
+                            // // print(Login2.userId);
+                            // //
+                            // // await _storeUserId(userId);
+                            // // await SharedPreferencesUtil.setBool('isLoggedIn', true);
+                            // await SharedPreferencesUtil.setLoginState(true);
+                            //
+                            // print("User has been created\n\n\n\n\n\n\n\n");
+                            // print(UserFormFields.userMobileNumber);
+                            // Navigator.pushNamed(context, 'bottomnavigation');
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0xFF2F482D),
+                            shadowColor: Colors.transparent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                              side: const BorderSide(
+                                color: Color(0xFF2F482D),
+                              ),
+                            ),
+                          ),
+                          child: const Text(
+                            'Login',
+                            style: TextStyle(
+                              fontFamily: 'Georgia',
+                              fontWeight: FontWeight.bold,
+                              fontSize: 17,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          )
-        ),
+            )),
       ),
+    );
+  }
+
+  void showAlertDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Enter appropriate details'),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }

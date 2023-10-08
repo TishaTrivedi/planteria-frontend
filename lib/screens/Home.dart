@@ -615,28 +615,28 @@ class _HomePageState extends State<HomePage> {
                                       ),
                                     ),
                                   ),
-                                  Positioned(
-                                    left: 13,
-                                    top: 40.31,
-                                    child: Container(
-                                      width: 40,
-                                      height: 43.45,
-                                      clipBehavior: Clip.antiAlias,
-                                      decoration: BoxDecoration(
-                                          color: Colors.black.withOpacity(0)),
-                                      child: IconButton(
-                                          icon: Icon(
-                                            isLiked
-                                                ? Icons.favorite
-                                                : Icons.favorite_border,
-                                            color: isLiked
-                                                ? Colors.red.shade600
-                                                : null, // Set the color to red if it's liked
-                                          ),
-                                          onPressed: _toggleLike,
-                                          color: Colors.white),
-                                    ),
-                                  ),
+                                  // Positioned(
+                                  //   left: 13,
+                                  //   top: 40.31,
+                                  //   child: Container(
+                                  //     width: 40,
+                                  //     height: 43.45,
+                                  //     clipBehavior: Clip.antiAlias,
+                                  //     decoration: BoxDecoration(
+                                  //         color: Colors.black.withOpacity(0)),
+                                  //     child: IconButton(
+                                  //         icon: Icon(
+                                  //           isLiked
+                                  //               ? Icons.favorite
+                                  //               : Icons.favorite_border,
+                                  //           color: isLiked
+                                  //               ? Colors.red.shade600
+                                  //               : null, // Set the color to red if it's liked
+                                  //         ),
+                                  //         onPressed: _toggleLike,
+                                  //         color: Colors.white),
+                                  //   ),
+                                  // ),
                                   Positioned(
                                     left: 61,
                                     top: -10,
@@ -1040,7 +1040,7 @@ class _HomePageState extends State<HomePage> {
             print(result.exception.toString());
             return Center(
               child: Text(
-                'Error fetching dishes: ${result.exception.toString()}',
+                'Error fetching user: ${result.exception.toString()}',
               ),
             );
           }
@@ -1054,7 +1054,7 @@ class _HomePageState extends State<HomePage> {
           final Map<String, dynamic>? data = result.data?['customerLoginByMobile'];
 
           if (data == null) {
-            return const Text('No dishes found');
+            return const Text('No user found');
           }
 
           return Row(

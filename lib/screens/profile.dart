@@ -31,25 +31,25 @@ class _ProfileState extends State<Profile> {
         backgroundColor: Colors.lightGreen[50],
         body: Column(
           children: [
-            Container(
-                padding: EdgeInsets.only(top: 45, left: 99),
-                alignment: Alignment.topLeft,
-                child: CircleAvatar(
-                  backgroundImage: AssetImage("assets/tisha.jpg"),
-                  radius: 80,
-                )),
-            Container(
-                padding: EdgeInsets.only(top: 15, left: 119),
-                alignment: Alignment.topLeft,
-                child: Text(
-                  "TISHA TRIVEDI",
-                  style: GoogleFonts.acme(
-                    color: Colors.black,
-                    fontSize: 20,
-                    //fontFamily: 'Playfair Display',
-                    //fontWeight: FontWeight.w50,
-                  ),
-                )),
+            // Container(
+            //     padding: EdgeInsets.only(top: 45, left: 99),
+            //     alignment: Alignment.topLeft,
+            //     child: CircleAvatar(
+            //       backgroundImage: AssetImage("assets/tisha.jpg"),
+            //       radius: 80,
+            //     )),
+            // Container(
+            //     padding: EdgeInsets.only(top: 15, left: 119),
+            //     alignment: Alignment.topLeft,
+            //     child: Text(
+            //       "TISHA TRIVEDI",
+            //       style: GoogleFonts.acme(
+            //         color: Colors.black,
+            //         fontSize: 20,
+            //         //fontFamily: 'Playfair Display',
+            //         //fontWeight: FontWeight.w50,
+            //       ),
+            //     )),
             SizedBox(
               height: 80,
             ),
