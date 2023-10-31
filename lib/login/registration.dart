@@ -1,7 +1,7 @@
 class UserFormFields {
   static int userId =1;
   static String userName = "";
-  static String password = "";
+  static String userPassword = "";
   static String userMobileNumber = "";
   static String userAddress = "";
   static String userfullName = "";

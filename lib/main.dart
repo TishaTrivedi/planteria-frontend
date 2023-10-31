@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:plantbackend/login/registeration3.dart';
 import 'package:plantbackend/screens/Home.dart';
 import 'package:plantbackend/screens/Products.dart';
 import 'package:plantbackend/screens/address.dart';
@@ -69,7 +70,8 @@ void main() async {
           'confirm': (context) => ConfirmOrder(),
           'profile': (context) => Profile(),
           'address': (context) => Address(),
-          'searchPageResult':(context)=>SearchResultsPage(List.empty())
+          'searchPageResult':(context)=>SearchResultsPage(List.empty()),
+          'registration3':(context)=>Register(),
         },
       ))));
 }

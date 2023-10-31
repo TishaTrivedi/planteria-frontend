@@ -8,6 +8,8 @@ import 'package:plantbackend/screens/checkout.dart';
 import 'package:plantbackend/screens/confirmOrder.dart';
 import 'package:upi_india/upi_india.dart';
 
+import '../login/registration.dart';
+
 class Payment extends StatefulWidget {
   //const Payment({Key? key}) : super(key: key);
   final int totalBagTotal;
@@ -317,8 +319,8 @@ class _PaymentState extends State<Payment> {
 
                       final MutationOptions options = MutationOptions(
                         document: gql('''
-        mutation AddToOrder(\$cartId: ID!, \$customerId: ID!, \$price: Int!) {
-          addToOrder(cartId: \$cartId, customerId: \$customerId, price: \$price) {
+        mutation AddToOrder(\$cartId: ID!, \$userId: ID!, \$price: Int!) {
+          addToOrder(cartId: \$cartId, customerId: \$userId, price: \$price) {
             order {
               id
             }
@@ -327,8 +329,7 @@ class _PaymentState extends State<Payment> {
       '''),
                         variables: <String, dynamic>{
                           'cartId': 10,
-                          'customerId':
-                              1, // Assuming customerId is static for this example
+                          'customerId':UserFormFields.userId, // Assuming customerId is static for this example
                           'price': bagTotal,
                         },
                       );

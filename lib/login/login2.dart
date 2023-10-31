@@ -21,6 +21,82 @@ class Login2 extends StatefulWidget {
 class _Login2State extends State<Login2> {
   final _formKey = GlobalKey<FormState>();
 
+  static Future<int> _getUsersCountByMobileNumber(String mobileNumber) async {
+    print("getUsersCountByMobileNumber");
+
+    final ValueNotifier<GraphQLClient> client = ValueNotifier<GraphQLClient>(
+      GraphQLClient(
+        cache: GraphQLCache(),
+        link: httpLink,
+      ),
+    );
+
+    final String getUsersCountQuery = '''
+    query GetUsersCount(\$mobileNumber: String!) {
+      displayUserByMobileNumber(mobileNumber: \$mobileNumber) {
+        id
+      }
+    }
+  ''';
+
+    final QueryOptions options = QueryOptions(
+      document: gql(getUsersCountQuery),
+      variables: {'mobileNumber': mobileNumber},
+    );
+
+    try {
+      final QueryResult result = await client.value.query(options);
+
+      if (result.hasException) {
+        throw result.exception!;
+      }
+
+      final dynamic user = result.data?['displayUserByMobileNumber'];
+      if (user == null) {
+        return 0; // User not found
+      } else if (user is List<dynamic>) {
+        return user.length; // Return the count of users
+      } else {
+        return 1; // Single user found
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static Future<int> _getUsersCountByMobileNumberAndPassword(String mobileNumber, String password) async {
+    final ValueNotifier<GraphQLClient> client = ValueNotifier<GraphQLClient>(
+      GraphQLClient(
+        cache: GraphQLCache(),
+        link: httpLink,
+      ),
+    );
+
+    final String getUsersCountQuery = '''
+    query GetUsersCount(\$mobileNumber: String!, \$password: String!) {
+      countUsersByMobileAndPassword(mobileNumber: \$mobileNumber, password: \$password)
+    }
+  ''';
+
+    final QueryOptions options = QueryOptions(
+      document: gql(getUsersCountQuery),
+      variables: {'mobileNumber': mobileNumber, 'password': password},
+    );
+
+    try {
+      final QueryResult result = await client.value.query(options);
+
+      if (result.hasException) {
+        throw result.exception!;
+      }
+
+      final int userCount = result.data?['countUsersByMobileAndPassword'] ?? 0;
+      return userCount;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   Future<void> _storeUserId(int userId) async {
     try {
       // Use your shared preferences utility to store the user ID
@@ -32,20 +108,68 @@ class _Login2State extends State<Login2> {
     }
   }
 
+  Future<int> _getUserId(String mobileNumber, String password) async {
+
+    final ValueNotifier<GraphQLClient> client = ValueNotifier<GraphQLClient>(
+      GraphQLClient(
+        cache: GraphQLCache(),
+        link: httpLink,
+      ),
+    );
+
+    final String getUsersCountQuery = '''
+      query(\$mobileNumber: String!, \$password: String!) {
+        displayUserByMobileNumberAndPassword(mobileNumber: \$mobileNumber, password: \$password) {
+          id
+          username
+          password
+        }
+      }
+    ''';
+
+    final QueryOptions options = QueryOptions(
+      document: gql(getUsersCountQuery),
+      variables: {'mobileNumber': mobileNumber, 'password': password},
+    );
+
+    try {
+      final QueryResult result = await client.value.query(options);
+
+      if (result.hasException) {
+        throw result.exception!;
+      }
+
+      final dynamic user = result.data?['displayUserByMobileNumberAndPassword'];
+      UserFormFields.userPassword = user['password'];
+      if (user == null) {
+        return 0; // User not found
+      } else if (user is List<dynamic>) {
+        final int userId = user.isNotEmpty ? int.parse(user[0]['id']) : 0;
+        return userId; // Return the user ID
+      } else {
+        final int userId = int.parse(user['id']);
+        return userId; // Single user found
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
   bool _isSelectedTextBox = false;
 
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _mobileNumberController = TextEditingController();
 
+  var mobileNumber;
   void _createUser(BuildContext context) async {
     print("In Create User");
     SharedPreferencesUtil.setString(
         'mobileNumber', UserFormFields.userMobileNumber.toString());
-    final userId = await _getUserId();
+    final userId = await _getUserId(UserFormFields.userMobileNumber.toString(),UserFormFields.userPassword);
     print('User ID: $userId');
     print(UserFormFields.userName);
-    print(UserFormFields.password);
+    print(UserFormFields.userPassword);
     print(UserFormFields.userMobileNumber);
 
     final String createUserMutation = '''
@@ -68,7 +192,7 @@ class _Login2State extends State<Login2> {
 
     final Map<String, dynamic> variables = {
       'username': UserFormFields.userName.toString(),
-      'password': UserFormFields.password.toString(),
+      'password': UserFormFields.userPassword.toString(),
       'mobileNumber': UserFormFields.userMobileNumber.toString(),
     };
 
@@ -97,7 +221,7 @@ class _Login2State extends State<Login2> {
         print('User Created');
 
         // After creating the user, get the userId
-        final userId = await _getUserId();
+        final userId = await _getUserId(UserFormFields.userMobileNumber.toString(),UserFormFields.userPassword);
         print('User ID: $userId'); // Print the user ID
 
         // Check if userId is not 0 (meaning a valid user was found)
@@ -120,48 +244,48 @@ class _Login2State extends State<Login2> {
       print("An error occurred: $error");
     }
   }
-  Future<int> _getUserId() async {
-    final GraphQLClient client = GraphQLClient(
-      cache: GraphQLCache(),
-      link: httpLink, // Replace with your GraphQL HTTP link
-    );
-
-    final String getUserQuery = '''
-    query CustomerLoginByMobile(\$mobileNumber: String!) {
-      customerLoginByMobile(mobileNumber: \$mobileNumber) {
-        id
-      }
-    }
-  ''';
-
-    print('UserMobileNumber: ${UserFormFields.userMobileNumber.toString()}');
-    final QueryOptions options = QueryOptions(
-      document: gql(getUserQuery),
-      variables: {'mobileNumber': UserFormFields.userMobileNumber.toString()}, // Use UserFormFields.userMobileNumber
-    );
-
-    try {
-      final QueryResult result = await client.query(options);
-
-      if (result.hasException) {
-        throw result.exception!;
-      }
-
-      final dynamic user = result.data?['customerLoginByMobile'];
-      if (user == null) {
-
-        print("USer not foundddd\n\n\n\n\n\n\n\n\n");
-        return 0;// User not found
-      } else {
-        final int userId = int.parse(user['id']);
-        print("$userId\n\n\n\n\n\n\n\n\n");
-
-        return userId; // User found
-      }
-    } catch (error) {
-      throw error;
-    }
-  }
+  // Future<int> _getUserId() async {
+  //   final GraphQLClient client = GraphQLClient(
+  //     cache: GraphQLCache(),
+  //     link: httpLink, // Replace with your GraphQL HTTP link
+  //   );
+  //
+  //   final String getUserQuery = '''
+  //   query CustomerLoginByMobile(\$mobileNumber: String!) {
+  //     customerLoginByMobile(mobileNumber: \$mobileNumber) {
+  //       id
+  //     }
+  //   }
+  // ''';
+  //
+  //   print('UserMobileNumber: ${UserFormFields.userMobileNumber.toString()}');
+  //   final QueryOptions options = QueryOptions(
+  //     document: gql(getUserQuery),
+  //     variables: {'mobileNumber': UserFormFields.userMobileNumber.toString()}, // Use UserFormFields.userMobileNumber
+  //   );
+  //
+  //   try {
+  //     final QueryResult result = await client.query(options);
+  //
+  //     if (result.hasException) {
+  //       throw result.exception!;
+  //     }
+  //
+  //     final dynamic user = result.data?['customerLoginByMobile'];
+  //     if (user == null) {
+  //
+  //       print("USer not foundddd\n\n\n\n\n\n\n\n\n");
+  //       return 0;// User not found
+  //     } else {
+  //       final int userId = int.parse(user['id']);
+  //       print("$userId\n\n\n\n\n\n\n\n\n");
+  //
+  //       return userId; // User found
+  //     }
+  //   } catch (error) {
+  //     throw error;
+  //   }
+  // }
 
 
   @override
@@ -291,8 +415,8 @@ class _Login2State extends State<Login2> {
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Username is required';
-                          } else if (value.length < 8) {
-                            return 'Username must be at least 8 characters';
+                          } else if (value.length <4) {
+                            return 'Username must be at least 4 characters';
                           }
                           return null; // No validation error
                         },
@@ -346,7 +470,7 @@ class _Login2State extends State<Login2> {
                         },
                         onChanged: (value) {
                           setState(() {
-                            UserFormFields.password = value;
+                            UserFormFields.userPassword = value;
                           });
                         },
                         keyboardType: TextInputType.text,
@@ -500,15 +624,56 @@ class _Login2State extends State<Login2> {
                         height: 45,
                         width: width,
                         child: ElevatedButton(
-                          onPressed: () async {
-                            print('clicked \n\n\n\n\n\n');
-                            if (_formKey.currentState!.validate()) {
+                          onPressed:() async {
+                          print(UserFormFields.userMobileNumber);
+                          print(UserFormFields.userPassword);
+
+                          int userCountMobile = await _getUsersCountByMobileNumber(UserFormFields.userMobileNumber.toString());
+                          print("Number of users $userCountMobile");
+
+                          if (userCountMobile == 1) {
+                          int userCountPassword = await _getUsersCountByMobileNumberAndPassword(UserFormFields.userMobileNumber.toString(), UserFormFields.userPassword);
+                          print("Number of users $userCountPassword");
+
+                          if (userCountPassword == 1) {
+                          int userId = await _getUserId(UserFormFields.userMobileNumber.toString(),UserFormFields.userPassword);
+                          setState(() {
+                          UserFormFields.userId = userId;
+                          });
+                          print("User ID ${UserFormFields.userId}\n\n\n\n\n\n\n\n");
+
+                          await SharedPreferencesUtil.setLoginState(true);
+                          await _storeUserId(UserFormFields.userId);
+
+                          Navigator.pushReplacementNamed(context, 'bottomnavigation');
+                          } else {
+                          showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                          return AlertDialog(
+                          title: const Text('Alert'),
+                          content: const Text('User with mobile Number already Exist Check your password.'),
+                          actions: [
+                          TextButton(
+                          onPressed: () {
+                          // Close the dialog when the "OK" button is pressed.
+                          Navigator.of(context).pop();
+                          },
+                          child: const Text('OK'),
+                          ),
+                          ],
+                          );
+                          },
+                          );
+                          }
+                          }
+                            else if (_formKey.currentState!.validate()) {
                               // If the form is valid, execute your logic
                               _createUser(context);
 
                               await SharedPreferencesUtil.setLoginState(true);
                               print("User has been created\n\n\n\n\n\n\n\n");
-                              final updateduserId = await _getUserId();
+                              final updateduserId = await _getUserId(UserFormFields.userMobileNumber.toString(),UserFormFields.userPassword);
                               //var updatedUserId =await _storeUserId(userId);
                               setState(() {
                                 UserFormFields.userId=updateduserId;
@@ -517,31 +682,56 @@ class _Login2State extends State<Login2> {
 
                               print(UserFormFields.userMobileNumber);
                               Navigator.push(context, MaterialPageRoute(builder: (context)=>BottomNavigation()));
-                            } else {
+                            }
+                            else {
                               print("Alert");
                               showAlertDialog(
                                   context, 'Please fill in all fields.');
                             }
+                          }
+                          //     () async {
+                          //   print('clicked \n\n\n\n\n\n');
+                          //   if (_formKey.currentState!.validate()) {
+                          //     // If the form is valid, execute your logic
+                          //     _createUser(context);
+                          //
+                          //     await SharedPreferencesUtil.setLoginState(true);
+                          //     print("User has been created\n\n\n\n\n\n\n\n");
+                          //     final updateduserId = await _getUserId();
+                          //     //var updatedUserId =await _storeUserId(userId);
+                          //     setState(() {
+                          //       UserFormFields.userId=updateduserId;
+                          //     });
+                          //     print('User ID: $updateduserId');
+                          //
+                          //     print(UserFormFields.userMobileNumber);
+                          //     Navigator.push(context, MaterialPageRoute(builder: (context)=>BottomNavigation()));
+                          //   } else {
+                          //     print("Alert");
+                          //     showAlertDialog(
+                          //         context, 'Please fill in all fields.');
+                          //   }
+                          //
+                          //   // _createUser(context);
+                          //   //
+                          //   // // int userId = await _getUserId();
+                          //   // // print("User Id on call " + userId.toString());
+                          //   // // setState(() {
+                          //   // //   Login2.userId = userId;
+                          //   // // });
+                          //   // //
+                          //   // // print(Login2.userId);
+                          //   // //
+                          //   // // await _storeUserId(userId);
+                          //   // // await SharedPreferencesUtil.setBool('isLoggedIn', true);
+                          //   // await SharedPreferencesUtil.setLoginState(true);
+                          //   //
+                          //   // print("User has been created\n\n\n\n\n\n\n\n");
+                          //   // print(UserFormFields.userMobileNumber);
+                          //   // Navigator.pushNamed(context, 'bottomnavigation');
+                          // },
 
-                            // _createUser(context);
-                            //
-                            // // int userId = await _getUserId();
-                            // // print("User Id on call " + userId.toString());
-                            // // setState(() {
-                            // //   Login2.userId = userId;
-                            // // });
-                            // //
-                            // // print(Login2.userId);
-                            // //
-                            // // await _storeUserId(userId);
-                            // // await SharedPreferencesUtil.setBool('isLoggedIn', true);
-                            // await SharedPreferencesUtil.setLoginState(true);
-                            //
-                            // print("User has been created\n\n\n\n\n\n\n\n");
-                            // print(UserFormFields.userMobileNumber);
-                            // Navigator.pushNamed(context, 'bottomnavigation');
-                          },
-                          style: ElevatedButton.styleFrom(
+                          ,style: ElevatedButton.styleFrom(
                             backgroundColor: Color(0xFF50694C),
                             shadowColor: Colors.transparent,
                             shape: RoundedRectangleBorder(
