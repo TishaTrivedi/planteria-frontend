@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:plantbackend/graphql_client.dart';
 import 'package:plantbackend/screens/soil.dart';
 import 'package:plantbackend/screens/zodiac.dart';
 
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../Animations/scale_animation.dart';
-import '../graphql_client.dart';
+import '../login/login2.dart';
+import '../login/registration.dart';
 import 'fertilizers.dart';
 
 class TabView extends StatelessWidget {
@@ -70,13 +73,14 @@ class TabView extends StatelessWidget {
             SliverFillRemaining(
               child: TabBarView(
                 children: [
-                  Soil(category: 'All', client: client, fetchAllPlants: true),
-                  Soil(category: 'zodiac', client: client),
-                  Soil(category: 'medicinal', client: client),
-                  Soil(category: 'air_purifying', client: client),
-                  Soil(category: 'flowering', client: client),
-                  Soil(category: 'pet-friendly', client: client),
-                  Soil(category: 'low_maintain', client: client),
+                  Soil(category: 'All', client: client, fetchAllPlants: true, userId: UserFormFields.userId),
+                  Soil(category: 'zodiac', client: client, userId: UserFormFields.userId),
+                  Soil(category: 'medicinal', client: client, userId: UserFormFields.userId),
+                  Soil(category: 'air_purifying', client: client, userId: UserFormFields.userId),
+                  Soil(category: 'flowering', client: client, userId: UserFormFields.userId),
+                  Soil(category: 'pet-friendly', client: client, userId: UserFormFields.userId),
+                  Soil(category: 'low_maintain', client: client, userId: UserFormFields.userId),
+
                 ],
               ),
             ),
@@ -92,19 +96,24 @@ class Soil extends StatefulWidget {
   final String category;
   final GraphQLClient client;
   final bool fetchAllPlants;
+  final int userId;
+
 
   Soil(
       {required this.category,
       required this.client,
-      this.fetchAllPlants = false});
+      this.fetchAllPlants = false,
+        required this.userId,});
   @override
   State<Soil> createState() => _SoilState();
 }
 
 class _SoilState extends State<Soil> with SingleTickerProviderStateMixin {
+  //final SharedPreferences prefs = await SharedPreferences.getInstance();
   int quant = 1;
   bool isLiked = false;
   bool productRemoved = false;
+  int currentUserId = UserFormFields.userId;
 
   void _toggleLike() {
     setState(() {
@@ -149,6 +158,7 @@ class _SoilState extends State<Soil> with SingleTickerProviderStateMixin {
       link: httpLink,
       cache: GraphQLCache(),
     );
+    print('UserId in Soil widget: $currentUserId');
   }
 
   @override
@@ -214,8 +224,8 @@ class _SoilState extends State<Soil> with SingleTickerProviderStateMixin {
                                             plantId: plantId,
                                           )));
                               final addToRecentlyViewedMutation = gql('''
-                              mutation AddToRecentlyViewed(\$plantId: ID!) {
-                                addToRecentlyViewed(customerId:1,itemId:\$plantId,itemType:"plant"){
+                              mutation AddToRecentlyViewed(\$plantId: ID!,\$customerId: ID!) {
+                                addToRecentlyViewed(customerId:\$customerId,itemId:\$plantId,itemType:"plant"){
                                   recentlyViewed{
                                     plantId{
                                        plantName
@@ -228,11 +238,14 @@ class _SoilState extends State<Soil> with SingleTickerProviderStateMixin {
                                 }
                               }
                               ''');
+                              print('UserId: ${widget.userId}');
                               try {
                                 final result = await client.mutate(
                                   MutationOptions(
                                     document: addToRecentlyViewedMutation,
-                                    variables: {'plantId': plant['id']},
+                                    variables: {'plantId': plant['id'],
+                                      'customerId': UserFormFields.userId,},
+
                                   ),
                                 );
 
@@ -312,15 +325,16 @@ class _SoilState extends State<Soil> with SingleTickerProviderStateMixin {
                                     child: IconButton(
                                       onPressed: () async {
                                         final addProductToCartMutation = gql('''
-                                          mutation AddToCart(\$plantId: ID!, \$quantity: Int!) {
-                                            addToCart(customerId: 1, itemId: \$plantId, itemType: "plant", quantity: \$quantity) {
-                                              savedProduct {
-                                                id
-                                                # Add other fields you want to retrieve
-                                              }
-                                            }
-                                          }
-                                        ''');
+  mutation AddToCart(\$plantId: ID!, \$quantity: Int!, \$userId: ID!) {
+    addToCart(customerId: \$userId, itemId: \$plantId, itemType: "plant", quantity: \$quantity) {
+      savedProduct {
+        id
+        # Add other fields you want to retrieve
+      }
+    }
+  }
+''');
+
 
                                         try {
                                           final result = await client.mutate(
@@ -330,7 +344,8 @@ class _SoilState extends State<Soil> with SingleTickerProviderStateMixin {
                                               variables: {
                                                 'plantId': plant['id'],
                                                 'quantity':
-                                                    quant, // Specify the quantity you want to add to the cart
+                                                    quant,
+                                                'userId': UserFormFields.userId,// Specify the quantity you want to add to the cart
                                               },
                                             ),
                                           );
@@ -342,7 +357,8 @@ class _SoilState extends State<Soil> with SingleTickerProviderStateMixin {
                                           } else {
                                             // Product added to cart successfully.
                                             // You can update the UI or show a confirmation message.
-                                            print('Plant added to cart.');
+                                            print('Plant added to cart.  ${UserFormFields.userId}');
+                                            print(UserFormFields.userId);
                                             setState(() {
                                               productRemoved = true;
                                             });
@@ -462,8 +478,8 @@ class _SoilState extends State<Soil> with SingleTickerProviderStateMixin {
                                             final result = await client.mutate(
                                               MutationOptions(
                                                 document: gql('''
-          mutation AddToWishlist(\$plantId: ID!) {
-            addPlantsToWishlist(customerId: 1, plantId: \$plantId) {
+          mutation AddToWishlist(\$plantId: ID!,\$userId: ID!) {
+            addPlantsToWishlist(customerId: \$userId, plantId: \$plantId) {
               savedPlant {
                 id
               }
@@ -472,6 +488,7 @@ class _SoilState extends State<Soil> with SingleTickerProviderStateMixin {
         '''),
                                                 variables: {
                                                   'plantId': plant['id'],
+                                                  'userId': UserFormFields.userId,
                                                 },
                                               ),
                                             );
@@ -501,14 +518,15 @@ class _SoilState extends State<Soil> with SingleTickerProviderStateMixin {
                                             final result = await client.mutate(
                                               MutationOptions(
                                                 document: gql('''
-          mutation RemoveFromWishlist(\$plantId: ID!) {
-            removePlantsFromWishlist(customerId: 1, plantId: \$plantId) {
+          mutation RemoveFromWishlist(\$plantId: ID!,\$userId: ID!) {
+            removePlantsFromWishlist(customerId: \$userId, plantId: \$plantId) {
               deletedCount
             }
           }
         '''),
                                                 variables: {
                                                   'plantId': plant['id'],
+                                                  'userId': UserFormFields.userId,
                                                 },
                                               ),
                                             );

@@ -5,6 +5,8 @@ import 'package:plantbackend/screens/productDesc.dart';
 
 import '../Animations/scale_animation.dart';
 import '../graphql_client.dart';
+import '../login/login2.dart';
+import '../login/registration.dart';
 import 'fertilizers.dart';
 
 class Products extends StatefulWidget {
@@ -130,24 +132,26 @@ class _ProductsState extends State<Products>
                                       builder: (context) =>
                                           ProductDesc(productId: productId)));
                               final addToRecentlyViewedMutation = gql('''
-                              mutation AddToRecentlyViewed(\$productId: ID!) {
-                                addToRecentlyViewed(customerId:1,itemId:\$productId,itemType:"product"){
-                                  recentlyViewed{
-                                   
-                                    productId{
-                                      productName
-                                      images
-                                      price
-                                    }
-                                  }
-                                }
-                              }
-                              ''');
+mutation AddToRecentlyViewed(\$productId: ID!, \$userId: ID!) {
+  addToRecentlyViewed(customerId: \$userId, itemId: \$productId, itemType: "product") {
+    recentlyViewed {
+      productId {
+        productName
+        images
+        price
+      }
+    }
+  }
+}
+''');
                               try {
                                 final result = await client.mutate(
                                   MutationOptions(
                                     document: addToRecentlyViewedMutation,
-                                    variables: {'productId': product['id']},
+                                    variables: {'productId': product['id'],
+                                      'userId': UserFormFields.userId,
+                                    },
+
                                   ),
                                 );
 
@@ -160,7 +164,7 @@ class _ProductsState extends State<Products>
                                   // Product added to cart successfully.
                                   // You can update the UI or show a confirmation message.
 
-                                  print('Product added to recently Viewed.');
+                                  print('Product added to recently Viewed. }');
                                 }
                               } catch (error) {
                                 // Handle any unexpected errors here.
@@ -229,8 +233,8 @@ class _ProductsState extends State<Products>
                                     child: IconButton(
                                       onPressed: () async {
                                         final addProductToCartMutation = gql('''
-                                          mutation AddToCart(\$productId: ID!, \$quantity: Int!) {
-                                            addToCart(customerId: 1, itemId: \$productId, itemType: "product", quantity: \$quantity) {
+                                          mutation AddToCart(\$productId: ID!, \$quantity: Int!,\$userId: ID!) {
+                                            addToCart(customerId:\$userId , itemId: \$productId, itemType: "product", quantity: \$quantity) {
                                               savedProduct {
                                                 id
                                                 # Add other fields you want to retrieve
@@ -247,7 +251,9 @@ class _ProductsState extends State<Products>
                                               variables: {
                                                 'productId': product['id'],
                                                 'quantity':
-                                                    quant, // Specify the quantity you want to add to the cart
+                                                    quant,
+                                                'userId': UserFormFields.userId,// Specify the quantity you want to add to the cart
+// Specify the quantity you want to add to the cart
                                               },
                                             ),
                                           );
@@ -368,8 +374,8 @@ class _ProductsState extends State<Products>
                                             final result = await client.mutate(
                                               MutationOptions(
                                                 document: gql('''
-            mutation addProductsToWishlist(\$customerId: ID!, \$productId: ID!) {
-              addProductsToWishlist(customerId: \$customerId, productId: \$productId) {
+            mutation addProductsToWishlist(\$productId: ID!,\$userId: ID!) {
+              addProductsToWishlist(customerId: \$userId, productId: \$productId) {
                 savedProduct {
                   id
                 }
@@ -377,9 +383,10 @@ class _ProductsState extends State<Products>
             }
           '''),
                                                 variables: {
-                                                  'customerId':
-                                                      1, // Replace with the actual customer ID.
+                                                   // Replace with the actual customer ID.
                                                   'productId': productId,
+                                                  'userId': UserFormFields.userId,// Specify the quantity you want to add to the cart
+
                                                 },
                                               ),
                                             );
@@ -414,15 +421,15 @@ class _ProductsState extends State<Products>
                                             final result = await client.mutate(
                                               MutationOptions(
                                                 document: gql('''
-                                  mutation removeProductsFromWishlist(\$customerId: ID!, \$productId: ID!) {
-                                    removeProductsFromWishlist(customerId: \$customerId, productId: \$productId) {
+                                  mutation removeProductsFromWishlist(\$userID: ID!, \$productId: ID!) {
+                                    removeProductsFromWishlist(customerId: \$userID, productId: \$productId) {
                                       deletedCount
                                     }
                                   }
                                 '''),
                                                 variables: {
-                                                  'customerId':
-                                                      1, // Replace with the actual customer ID.
+                                                  'userID':
+                                                      UserFormFields.userId, // Replace with the actual customer ID.
                                                   'productId': productId,
                                                 },
                                               ),

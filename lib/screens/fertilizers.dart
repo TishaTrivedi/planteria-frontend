@@ -89,6 +89,23 @@ class _FertilizersState extends State<Fertilizers>
 
     return Container(
         child: Scaffold(
+          appBar: AppBar(
+            backgroundColor: Colors.lightGreen.shade50,
+            iconTheme: IconThemeData(color: Colors.black),
+            actions: [
+              Row(
+                children: [
+                  IconButton(onPressed: (){Navigator.pushNamed(context, 'wishlist');},
+                      icon: Icon(Icons.favorite,
+                        color: Colors.black,)),
+                  IconButton(onPressed: (){Navigator.pushNamed(context, 'cart');},
+                      icon: Icon(Icons.shopping_cart,
+                        color: Colors.black,))
+                ],
+              )
+
+            ],
+          ),
       backgroundColor: Colors.lightGreen.shade50,
       body: Query(
           options: QueryOptions(document: gql(fetchPlantQuery), variables: {
@@ -1101,7 +1118,16 @@ class _FertilizersState extends State<Fertilizers>
                                         } else {
                                           // Product added to cart successfully.
                                           // You can update the UI or show a confirmation message.
-                                          print('Plant added to cart.');
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                  'Plant added to cart.'),
+                                              duration: Duration(
+                                                  seconds:
+                                                  2), // You can adjust the duration
+                                            ),
+                                          );                                          print('Plant added to cart.');
                                         }
                                       } catch (error) {
                                         // Handle any unexpected errors here.

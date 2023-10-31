@@ -8,6 +8,7 @@ import 'package:like_button/like_button.dart';
 import 'package:plantbackend/login/registration.dart';
 import 'package:plantbackend/screens/Products.dart';
 import 'package:plantbackend/screens/productDesc.dart';
+import 'package:plantbackend/screens/searchPageResult.dart';
 import 'package:plantbackend/screens/soil.dart';
 import 'package:plantbackend/screens/tabView.dart';
 
@@ -23,8 +24,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-
-
+  final TextEditingController searchController = TextEditingController(); // Declare here
+  List<Map<String, dynamic>> searchResults = [];
   late GraphQLClient client;
 
   final List<PlantsData> plantList = [
@@ -132,6 +133,50 @@ class _HomePageState extends State<HomePage> {
       isLiked = !isLiked;
     });
   }
+  final searchProductsQuery = gql('''
+  query SearchProducts(\$query: String!) {
+    searchProducts(query: \$query) {
+      id
+      
+      mainCategory
+      productName
+      price
+      images    
+      description
+      size
+    }
+  }
+''');
+  Future<void> searchProducts(String query) async {
+    final response = await client.query(
+      QueryOptions(
+        document: searchProductsQuery,
+        variables: {
+          'query': query,
+        },
+      ),
+    );
+
+    if (response.hasException) {
+      print('Error: ${response.exception}');
+    } else {
+      final List<dynamic> products = response.data?['searchProducts'] as List;
+      final List<Map<String, dynamic>> results = products.cast<Map<String, dynamic>>();
+
+      setState(() {
+        searchResults = results;
+      });
+
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SearchResultsPage(searchResults),
+        ),
+      );
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -144,30 +189,71 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           children: [
             _buildUserProfileNameImage(width),
-            Container(
-              height: 110,
-              padding: EdgeInsets.only(left: 10, right: 10, top: 20),
-              child: TextField(
-                cursorColor: Colors.grey,
-                decoration: InputDecoration(
-                    fillColor: Colors.white54.withOpacity(0.5),
-                    filled: true,
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(40),
-                        borderSide:
-                            BorderSide(color: Colors.teal.shade700, width: 2)),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.teal.shade900),
-                      borderRadius: BorderRadius.circular(40),
-                    ),
-                    hintText: 'Search',
-                    hintStyle: TextStyle(color: Colors.grey, fontSize: 18),
-                    prefixIcon: Icon(
-                      Icons.search,
-                      color: Colors.teal.shade700,
-                    )),
-              ),
-            ),
+    Padding(
+    padding: const EdgeInsets.all(16.0),
+    child: Column(
+    children: [
+      TextField(
+        controller: searchController,
+        onSubmitted: (String query) {
+          if (query.isNotEmpty) {
+            searchProducts(query);
+          }
+        },
+        decoration: InputDecoration(
+          fillColor: Colors.white54.withOpacity(0.5),
+          filled: true,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(40),
+            borderSide: BorderSide(color: Colors.teal.shade700, width: 2),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.teal.shade900),
+            borderRadius: BorderRadius.circular(40),
+          ),
+          hintText: 'Search',
+          hintStyle: TextStyle(color: Colors.grey, fontSize: 18),
+          prefixIcon: Icon(
+            Icons.search,
+            color: Colors.teal.shade700,
+          ),
+        ),
+      ),
+      // ElevatedButton(
+      //   onPressed: () {
+      //     final query = searchController.text;
+      //     if (query.isNotEmpty) {
+      //       searchProducts(query);
+      //     }
+      //   },
+      //   child: Text('Search'),
+      // ),
+
+       ])),
+            // Container(
+            //   height: 110,
+            //   padding: EdgeInsets.only(left: 10, right: 10, top: 20),
+            //   child: TextField(
+            //     cursorColor: Colors.grey,
+            //     decoration: InputDecoration(
+            //         fillColor: Colors.white54.withOpacity(0.5),
+            //         filled: true,
+            //         border: OutlineInputBorder(
+            //             borderRadius: BorderRadius.circular(40),
+            //             borderSide:
+            //             BorderSide(color: Colors.teal.shade700, width: 2)),
+            //         focusedBorder: OutlineInputBorder(
+            //           borderSide: BorderSide(color: Colors.teal.shade900),
+            //           borderRadius: BorderRadius.circular(40),
+            //         ),
+            //         hintText: 'Search',
+            //         hintStyle: TextStyle(color: Colors.grey, fontSize: 18),
+            //         prefixIcon: Icon(
+            //           Icons.search,
+            //           color: Colors.teal.shade700,
+            //         )),
+            //   ),
+            // ),
             // SizedBox(
             //   height: 20,
             // ),
@@ -189,7 +275,7 @@ class _HomePageState extends State<HomePage> {
                         width: double.infinity,
                         // padding: EdgeInsets.all(10),
                         child: onboardingPages[
-                            index], // Your content for each onboarding page
+                        index], // Your content for each onboarding page
                       ),
                     ),
                   );
@@ -224,33 +310,33 @@ class _HomePageState extends State<HomePage> {
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) => Products(
-                                            mainCategory: "tool",
-                                            client: GraphQLClient(
-                                                link: httpLink,
-                                                cache: GraphQLCache()),
-                                          )));
+                                        mainCategory: "tool",
+                                        client: GraphQLClient(
+                                            link: httpLink,
+                                            cache: GraphQLCache()),
+                                      )));
                               break;
                             case 2:
                               Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) => Products(
-                                            mainCategory: "pot",
-                                            client: GraphQLClient(
-                                                link: httpLink,
-                                                cache: GraphQLCache()),
-                                          )));
+                                        mainCategory: "pot",
+                                        client: GraphQLClient(
+                                            link: httpLink,
+                                            cache: GraphQLCache()),
+                                      )));
                               break;
                             case 3:
                               Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) => Products(
-                                            mainCategory: "fertilizer",
-                                            client: GraphQLClient(
-                                                link: httpLink,
-                                                cache: GraphQLCache()),
-                                          )));
+                                        mainCategory: "fertilizer",
+                                        client: GraphQLClient(
+                                            link: httpLink,
+                                            cache: GraphQLCache()),
+                                      )));
                               break;
                           }
                         },
@@ -283,7 +369,7 @@ class _HomePageState extends State<HomePage> {
                                           ),
                                           shape: RoundedRectangleBorder(
                                             borderRadius:
-                                                BorderRadius.circular(24),
+                                            BorderRadius.circular(24),
                                           ),
                                         ),
                                       ),
@@ -336,7 +422,7 @@ class _HomePageState extends State<HomePage> {
                   options: QueryOptions(
                     document: gql('''
                         query{
-                        displayUserRecentlyViewed(customerId:1){
+                        displayUserRecentlyViewed(customerId:${UserFormFields.userId}){
                           plantId{
                           id
                             plantName
@@ -371,7 +457,7 @@ class _HomePageState extends State<HomePage> {
                       );
                     }
                     final recentlyViewed =
-                        result.data?['displayUserRecentlyViewed'] as List;
+                    result.data?['displayUserRecentlyViewed'] as List;
                     return ListView.builder(
                         scrollDirection: Axis.horizontal,
                         itemCount: recentlyViewed.length,
@@ -412,7 +498,7 @@ class _HomePageState extends State<HomePage> {
                             },
                             child: Container(
                               width:
-                                  130, // Adjust the width of each item as needed
+                              130, // Adjust the width of each item as needed
                               margin: EdgeInsets.symmetric(horizontal: 10),
                               child: Stack(
                                 children: [
@@ -438,7 +524,7 @@ class _HomePageState extends State<HomePage> {
                                           ),
                                           shape: RoundedRectangleBorder(
                                             borderRadius:
-                                                BorderRadius.circular(24),
+                                            BorderRadius.circular(24),
                                           ),
                                         ),
                                       ),
@@ -482,11 +568,11 @@ class _HomePageState extends State<HomePage> {
                                               ? 'product'
                                               : 'plant';
                                           final quantity =
-                                              1; // You can adjust the quantity as needed
+                                          1; // You can adjust the quantity as needed
 
                                           final addToCartMutation = gql('''
-      mutation AddToCart(\$customerId: ID!, \$itemId: ID!, \$itemType: String!, \$quantity: Int!) {
-        addToCart(customerId: \$customerId, itemId: \$itemId, itemType: \$itemType, quantity: \$quantity) {
+      mutation AddToCart(\$userId: ID!, \$itemId: ID!, \$itemType: String!, \$quantity: Int!) {
+        addToCart(customerId: \$userId, itemId: \$itemId, itemType: \$itemType, quantity: \$quantity) {
           savedProduct {
             id
             # Add other fields you want to retrieve
@@ -500,8 +586,7 @@ class _HomePageState extends State<HomePage> {
                                               MutationOptions(
                                                 document: addToCartMutation,
                                                 variables: {
-                                                  'customerId':
-                                                      1, // Replace with the actual customer ID
+                                                  'userId': UserFormFields.userId, // Replace with the actual customer ID
                                                   'itemId': itemId,
                                                   'itemType': itemType,
                                                   'quantity': quantity,
@@ -518,6 +603,7 @@ class _HomePageState extends State<HomePage> {
                                               // Product/plant added to cart successfully.
                                               // You can update the UI or show a confirmation message.
                                               print('Item added to cart.');
+                                              print(UserFormFields.userId);
 
                                               // Show a Snackbar with the success message
                                               ScaffoldMessenger.of(context)
@@ -527,7 +613,7 @@ class _HomePageState extends State<HomePage> {
                                                       'Item added to cart successfully.'),
                                                   duration: Duration(
                                                       seconds:
-                                                          2), // You can adjust the duration
+                                                      2), // You can adjust the duration
                                                 ),
                                               );
                                             }
@@ -561,7 +647,7 @@ class _HomePageState extends State<HomePage> {
                                                     0.7099999785423279),
                                                 shape: RoundedRectangleBorder(
                                                   borderRadius:
-                                                      BorderRadius.circular(24),
+                                                  BorderRadius.circular(24),
                                                 ),
                                               ),
                                             ),
@@ -576,9 +662,9 @@ class _HomePageState extends State<HomePage> {
                                                 '₹ ' +
                                                     (product != null
                                                         ? product['price']
-                                                            .toString()
+                                                        .toString()
                                                         : plant['price']
-                                                            .toString()),
+                                                        .toString()),
                                                 textAlign: TextAlign.center,
                                                 style: GoogleFonts.acme(
                                                   color: Color(0xFF20401B),
@@ -601,11 +687,11 @@ class _HomePageState extends State<HomePage> {
                                       child: Text(
                                         product != null
                                             ? product['mainCategory']
-                                                .toString()
-                                                .toLowerCase()
+                                            .toString()
+                                            .toLowerCase()
                                             : plant['category']
-                                                .toString()
-                                                .toLowerCase(),
+                                            .toString()
+                                            .toLowerCase(),
                                         style: GoogleFonts.playfairDisplay(
                                           color: Colors.white
                                               .withOpacity(0.7400000095367432),
@@ -645,17 +731,17 @@ class _HomePageState extends State<HomePage> {
                                       height: 115,
                                       child: imageUrl != null
                                           ? Image.network(
-                                              imageUrl,
-                                              width: 38.26,
-                                              height: 70.48,
-                                              fit: BoxFit.fill,
-                                            )
+                                        imageUrl,
+                                        width: 38.26,
+                                        height: 70.48,
+                                        fit: BoxFit.fill,
+                                      )
                                           : Image.asset(
-                                              "assets/category/f1.png",
-                                              width: 28.26,
-                                              height: 63.48,
-                                              fit: BoxFit.fill,
-                                            ),
+                                        "assets/category/f1.png",
+                                        width: 28.26,
+                                        height: 63.48,
+                                        fit: BoxFit.fill,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -1114,9 +1200,9 @@ class PlantsData {
 
   PlantsData(
       {required this.plantImage,
-      required this.plantName,
-      required this.plantCategory,
-      required this.plantPrice});
+        required this.plantName,
+        required this.plantCategory,
+        required this.plantPrice});
 }
 
 class CategoryData {

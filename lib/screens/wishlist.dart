@@ -7,6 +7,7 @@ import 'package:plantbackend/screens/soil.dart';
 
 import '../Animations/scale_animation.dart';
 import '../graphql_client.dart';
+import '../login/registration.dart';
 import 'fertilizers.dart';
 
 class WishList extends StatefulWidget {
@@ -36,6 +37,9 @@ class _WishListState extends State<WishList> {
       child: Scaffold(
         backgroundColor: Colors.lightGreen.shade50,
         appBar: AppBar(
+          // leading:IconButton(onPressed: (){
+          //   Navigator.pop(context);
+          // }, icon: Icon(Icons.arrow_back)),
           backgroundColor: Color(0xFF3C593B),
           title: Text(
             "My WishList",
@@ -58,7 +62,7 @@ class _WishListState extends State<WishList> {
               options: QueryOptions(
                 document: gql('''
                               query {
-                                displayCustomerLikedPlantsById(customerId: 1) {
+                                displayCustomerLikedPlantsById(customerId: ${UserFormFields.userId}) {
                                   id
                                   plantId {
                                     id
@@ -178,7 +182,7 @@ class _WishListState extends State<WishList> {
                                       onPressed: () async {
                                         final addProductToCartMutation = gql('''
                                           mutation AddToCart(\$plantId: ID!, \$quantity: Int!) {
-                                            addToCart(customerId: 1, itemId: \$plantId, itemType: "plant", quantity: \$quantity) {
+                                            addToCart(customerId: ${UserFormFields.userId}, itemId: \$plantId, itemType: "plant", quantity: \$quantity) {
                                               savedProduct {
                                                 id
                                                 # Add other fields you want to retrieve
@@ -336,8 +340,7 @@ class _WishListState extends State<WishList> {
                                                 }
                                               '''),
                                                 variables: {
-                                                  'customerId':
-                                                      1, // Replace with the actual customer ID.
+                                                  'customerId':UserFormFields.userId, // Replace with the actual customer ID.
                                                   'plantId': plantId,
                                                 },
                                               ),
@@ -402,7 +405,7 @@ class _WishListState extends State<WishList> {
               options: QueryOptions(
                 document: gql('''
                                   query {
-                                    displayCustomerLikedProductsById(customerId: 1) {
+                                    displayCustomerLikedProductsById(customerId: ${UserFormFields.userId}) {
                                       id
                                       productId {
                                       id

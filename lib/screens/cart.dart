@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:graphql/client.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:plantbackend/login/registration.dart';
 import 'package:plantbackend/screens/checkout.dart';
 
 import '../graphql_client.dart';
 
 class ShoppingCart extends StatefulWidget {
+  //const ShoppingCart({Key? key}) : super(key: key);
+
   //const ShoppingCart({Key? key}) : super(key: key);
 
   final int quant;
@@ -16,6 +19,8 @@ class ShoppingCart extends StatefulWidget {
 }
 
 class _ShoppingCartState extends State<ShoppingCart> {
+  int customerId=UserFormFields.userId;
+
   bool productRemoved = false;
   int quant = 1;
 
@@ -109,7 +114,7 @@ class _ShoppingCartState extends State<ShoppingCart> {
     } else {
       // Check the result and perform actions accordingly
       final int increasedQuantity =
-          result.data?['increaseCartItemQuantity']['cartItem']['quantity'];
+      result.data?['increaseCartItemQuantity']['cartItem']['quantity'];
 
       if (increasedQuantity != null) {
         // Item quantity was successfully increased
@@ -153,7 +158,7 @@ class _ShoppingCartState extends State<ShoppingCart> {
     } else {
       // Check the result and perform actions accordingly
       final int decreasedQuantity =
-          result.data?['decreaseCartItemQuantity']['cartItem']['quantity'];
+      result.data?['decreaseCartItemQuantity']['cartItem']['quantity'];
 
       if (decreasedQuantity != null) {
         // Item quantity was successfully decreased
@@ -183,7 +188,7 @@ class _ShoppingCartState extends State<ShoppingCart> {
       document: gql(removeFromCartMutation),
       variables: {
         'customerId':
-            customerId, // This is where you use the customerId variable
+        customerId, // This is where you use the customerId variable
         'itemId': itemId,
         'itemType': itemType,
       },
@@ -223,6 +228,7 @@ class _ShoppingCartState extends State<ShoppingCart> {
       link: httpLink,
       cache: GraphQLCache(),
     );
+    print(UserFormFields.userId);
 
     quant = 1;
   }
@@ -233,14 +239,18 @@ class _ShoppingCartState extends State<ShoppingCart> {
       child: Scaffold(
         backgroundColor: Colors.lightGreen.shade50,
         appBar: AppBar(
+          // leading:IconButton(onPressed: (){
+          //   Navigator.pop(context);
+          // }, icon: Icon(Icons.arrow_back)),
           backgroundColor: Color(0xFF3C593B),
+
           title: Text(
             "My Shopping Cart",
             style: GoogleFonts.lora(
               fontWeight: FontWeight.w600,
             ),
           ),
-          leading: Icon(Icons.arrow_back),
+
           shadowColor: Color(0xFF2F482D),
         ),
         body: Query(
@@ -322,7 +332,7 @@ class _ShoppingCartState extends State<ShoppingCart> {
                         imageUrl = "${httpLinkImage}${plant['images']}";
                       } else {
                         imageUrl =
-                            "null"; // Handle the case where neither product nor plant is available
+                        "null"; // Handle the case where neither product nor plant is available
                       }
                       int subtotal = 0;
                       int shippingCost = 99;
@@ -365,7 +375,7 @@ class _ShoppingCartState extends State<ShoppingCart> {
                                 width: 329,
                                 height: 91,
                                 decoration:
-                                    BoxDecoration(color: Colors.transparent),
+                                BoxDecoration(color: Colors.transparent),
                               ),
                             ),
                             Positioned(
@@ -454,11 +464,11 @@ class _ShoppingCartState extends State<ShoppingCart> {
                                               plant != null) {
                                             if (cartItem != null) {
                                               final int? itemId =
-                                                  int.tryParse(cartItem['id']);
+                                              int.tryParse(cartItem['id']);
                                               if (itemId != null) {
                                                 print("Id of Item: $itemId");
                                                 final int customerId =
-                                                    1; // Replace '1' with the actual customer ID
+                                                1; // Replace '1' with the actual customer ID
                                                 decreaseQuantity(
                                                     customerId, itemId);
                                               } else {
@@ -489,11 +499,11 @@ class _ShoppingCartState extends State<ShoppingCart> {
                                               plant != null) {
                                             if (cartItem != null) {
                                               final int? itemId =
-                                                  int.tryParse(cartItem['id']);
+                                              int.tryParse(cartItem['id']);
                                               if (itemId != null) {
                                                 print("Id of Item: $itemId");
                                                 final int customerId =
-                                                    1; // Replace '1' with the actual customer ID
+                                                1; // Replace '1' with the actual customer ID
                                                 increaseQuantity(
                                                     customerId, itemId);
                                               } else {
@@ -571,17 +581,17 @@ class _ShoppingCartState extends State<ShoppingCart> {
                                   ..rotateZ(-0.02),
                                 child: imageUrl != null
                                     ? Image.network(
-                                        imageUrl,
-                                        width: 38.26,
-                                        height: 70.48,
-                                        fit: BoxFit.fill,
-                                      )
+                                  imageUrl,
+                                  width: 38.26,
+                                  height: 70.48,
+                                  fit: BoxFit.fill,
+                                )
                                     : Image.asset(
-                                        "assets/category/f1.png",
-                                        width: 28.26,
-                                        height: 63.48,
-                                        fit: BoxFit.fill,
-                                      ),
+                                  "assets/category/f1.png",
+                                  width: 28.26,
+                                  height: 63.48,
+                                  fit: BoxFit.fill,
+                                ),
                               ),
                             ),
                           ],
@@ -735,11 +745,11 @@ class _ShoppingCartState extends State<ShoppingCart> {
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) => Checkout(
-                                            totalBagTotal: totalBagTotal,
-                                            totalShippingCost:
-                                                totalShippingCost,
-                                            totalItemTotal: totalItemTotal,
-                                          )));
+                                        totalBagTotal: totalBagTotal,
+                                        totalShippingCost:
+                                        totalShippingCost,
+                                        totalItemTotal: totalItemTotal,
+                                      )));
                             },
                             child: Text(
                               'Checkout',
@@ -755,7 +765,7 @@ class _ShoppingCartState extends State<ShoppingCart> {
                                 backgroundColor: Color(0xFF3C593B),
                                 shape: RoundedRectangleBorder(
                                   borderRadius:
-                                      BorderRadius.all(Radius.circular(10)),
+                                  BorderRadius.all(Radius.circular(10)),
                                 ),
                                 fixedSize: Size(185, 35),
                                 alignment: Alignment.center),

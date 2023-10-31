@@ -4,13 +4,14 @@ import 'package:plantbackend/graphql_client.dart';
 import 'package:plantbackend/login/registration.dart';
 
 import 'package:plantbackend/graphql_client.dart';
+import 'package:plantbackend/screens/bottomnavigate.dart';
 
 import '../sharedPreferences.dart';
 
 class Login2 extends StatefulWidget {
   const Login2({Key? key}) : super(key: key);
 
-  static int userId = 0;
+  // static int userId = 0;
 
   @override
   State<Login2> createState() => _Login2State();
@@ -23,6 +24,7 @@ class _Login2State extends State<Login2> {
     try {
       // Use your shared preferences utility to store the user ID
       await SharedPreferencesUtil.setInt('userId', userId);
+      print('User ID stored successfully: $userId');
     } catch (error) {
       // Handle any errors that might occur during storage
       print('Error storing user ID: $error');
@@ -39,14 +41,16 @@ class _Login2State extends State<Login2> {
     print("In Create User");
     SharedPreferencesUtil.setString(
         'mobileNumber', UserFormFields.userMobileNumber.toString());
+    final userId = await _getUserId();
+    print('User ID: $userId');
     print(UserFormFields.userName);
     print(UserFormFields.password);
     print(UserFormFields.userMobileNumber);
 
     final String createUserMutation = '''
-    mutation CreateCustomerLogin(\$username: String!, \$password: String!, \$mobileNumber: String!) {
-      createCustomerLogin(username: \$username, password: \$password, mobileNumber: \$mobileNumber) {
-        customerLogin {
+    mutation CreateCustomer(\$username: String!, \$password: String!, \$mobileNumber: String!) {
+      createCustomer(username: \$username, password: \$password, mobileNumber: \$mobileNumber) {
+        customer {
           id
           username
           password
@@ -82,7 +86,7 @@ class _Login2State extends State<Login2> {
         // Check if it's an HttpException
         if (result.exception is HttpLinkServerException) {
           final HttpLinkServerException httpException =
-              result.exception as HttpLinkServerException;
+          result.exception as HttpLinkServerException;
           final response = httpException.response;
           print("Response Status Code: ${response?.statusCode}");
           print("Response Body: ${response?.body}");
@@ -90,13 +94,31 @@ class _Login2State extends State<Login2> {
       } else {
         // Mutation was successful, you can access data here if needed
         print('User Created');
-        // You can access fields from responseData, e.g., responseData['id']
+
+        // After creating the user, get the userId
+        final userId = await _getUserId();
+        print('User ID: $userId'); // Print the user ID
+
+        // Check if userId is not 0 (meaning a valid user was found)
+        if (userId != 0) {
+          // Store the userId using shared preferences
+          await _storeUserId(userId);
+
+          // Store it in a static variable
+          // Login2.userId = userId;
+
+          // You can also set the login state here if needed
+          await SharedPreferencesUtil.setLoginState(true);
+
+          print('User ID stored: $userId');
+        } else {
+          print('User not found'); // Handle this case appropriately
+        }
       }
     } catch (error) {
       print("An error occurred: $error");
     }
   }
-
   Future<int> _getUserId() async {
     final GraphQLClient client = GraphQLClient(
       cache: GraphQLCache(),
@@ -104,8 +126,8 @@ class _Login2State extends State<Login2> {
     );
 
     final String getUserQuery = '''
-    query GetUserByMobileNumber(\$mobileNumber: String!) {
-      userByMobileNumber(mobileNumber: \$mobileNumber) {
+    query CustomerLoginByMobile(\$mobileNumber: String!) {
+      customerLoginByMobile(mobileNumber: \$mobileNumber) {
         id
       }
     }
@@ -114,7 +136,7 @@ class _Login2State extends State<Login2> {
     print('UserMobileNumber: ${UserFormFields.userMobileNumber.toString()}');
     final QueryOptions options = QueryOptions(
       document: gql(getUserQuery),
-      variables: {'mobileNumber': _mobileNumberController.toString()},
+      variables: {'mobileNumber': UserFormFields.userMobileNumber.toString()}, // Use UserFormFields.userMobileNumber
     );
 
     try {
@@ -124,17 +146,22 @@ class _Login2State extends State<Login2> {
         throw result.exception!;
       }
 
-      final dynamic user = result.data?['userByMobileNumber'];
+      final dynamic user = result.data?['customerLoginByMobile'];
       if (user == null) {
-        return 0; // User not found
+
+        print("USer not foundddd\n\n\n\n\n\n\n\n\n");
+        return 0;// User not found
       } else {
         final int userId = int.parse(user['id']);
+        print("$userId\n\n\n\n\n\n\n\n\n");
+
         return userId; // User found
       }
     } catch (error) {
       throw error;
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -172,7 +199,7 @@ class _Login2State extends State<Login2> {
         height: height,
         child: Padding(
             padding:
-                const EdgeInsets.only(left: 20, right: 20, top: 0, bottom: 0),
+            const EdgeInsets.only(left: 20, right: 20, top: 0, bottom: 0),
             child: SingleChildScrollView(
               child: Form(
                 key: _formKey,
@@ -311,7 +338,7 @@ class _Login2State extends State<Login2> {
 
                     Padding(
                       padding:
-                          EdgeInsets.only(left: 0, right: 0, top: 0, bottom: 0),
+                      EdgeInsets.only(left: 0, right: 0, top: 0, bottom: 0),
                       child: TextFormField(
                         controller: _passwordController,
                         onTap: () {
@@ -409,7 +436,7 @@ class _Login2State extends State<Login2> {
 
                     Padding(
                       padding:
-                          EdgeInsets.only(left: 0, right: 0, top: 0, bottom: 0),
+                      EdgeInsets.only(left: 0, right: 0, top: 0, bottom: 0),
                       child: TextFormField(
                         controller: _mobileNumberController,
                         onTap: () {
@@ -479,10 +506,18 @@ class _Login2State extends State<Login2> {
                             if (_formKey.currentState!.validate()) {
                               // If the form is valid, execute your logic
                               _createUser(context);
+
                               await SharedPreferencesUtil.setLoginState(true);
                               print("User has been created\n\n\n\n\n\n\n\n");
+                              final updateduserId = await _getUserId();
+                              //var updatedUserId =await _storeUserId(userId);
+                              setState(() {
+                                UserFormFields.userId=updateduserId;
+                              });
+                              print('User ID: $updateduserId');
+
                               print(UserFormFields.userMobileNumber);
-                              Navigator.pushNamed(context, 'bottomnavigation');
+                              Navigator.push(context, MaterialPageRoute(builder: (context)=>BottomNavigation()));
                             } else {
                               print("Alert");
                               showAlertDialog(

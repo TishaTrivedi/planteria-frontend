@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:graphql/client.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
-
+//import 'package:graphql_flutter/';
 import '../Animations/slide_animation.dart';
 import '../graphql_client.dart';
+import '../login/registration.dart';
 
 class ProductDesc extends StatefulWidget {
   //const ProductDesc({Key? key}) : super(key: key);
@@ -74,6 +75,23 @@ class _ProductDescState extends State<ProductDesc> {
   Widget build(BuildContext context) {
     return Container(
         child: Scaffold(
+          appBar: AppBar(
+            backgroundColor: Colors.lightGreen.shade50,
+            iconTheme: IconThemeData(color: Colors.black),
+            actions: [
+              Row(
+                children: [
+                  IconButton(onPressed: (){Navigator.pushNamed(context, 'wishlist');},
+                      icon: Icon(Icons.favorite,
+                        color: Colors.black,)),
+                  IconButton(onPressed: (){Navigator.pushNamed(context, 'cart');},
+                      icon: Icon(Icons.shopping_cart,
+                        color: Colors.black,))
+                ],
+              )
+
+            ],
+          ),
       backgroundColor: Colors.lightGreen.shade50,
       body: Query(
           options: QueryOptions(document: gql(fetchProductQuery), variables: {
@@ -433,8 +451,8 @@ class _ProductDescState extends State<ProductDesc> {
                                 child: ElevatedButton(
                                   onPressed: () async {
                                     final addProductToCartMutation = gql('''
-                                          mutation AddToCart(\$productId: ID!, \$quantity: Int!) {
-                                            addToCart(customerId: 1, itemId: \$productId, itemType: "product", quantity: \$quantity) {
+                                          mutation AddToCart(\$productId: ID!, \$quantity: Int!,\$userId: ID!) {
+                                            addToCart(customerId:\$userId , itemId: \$productId, itemType: "product", quantity: \$quantity) {
                                               savedProduct {
                                                 id
                                                 # Add other fields you want to retrieve
@@ -446,11 +464,14 @@ class _ProductDescState extends State<ProductDesc> {
                                     try {
                                       final result = await client.mutate(
                                         MutationOptions(
-                                          document: addProductToCartMutation,
+                                          document:
+                                          addProductToCartMutation,
                                           variables: {
                                             'productId': products['id'],
                                             'quantity':
-                                                quant, // Specify the quantity you want to add to the cart
+                                            quant,
+                                            'userId': UserFormFields.userId,// Specify the quantity you want to add to the cart
+// Specify the quantity you want to add to the cart
                                           },
                                         ),
                                       );
@@ -464,6 +485,17 @@ class _ProductDescState extends State<ProductDesc> {
                                         // Product added to cart successfully.
                                         // You can update the UI or show a confirmation message.
                                         print('Product added to cart.');
+                                        print(UserFormFields.userId);
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                                'Product added to cart.'),
+                                            duration: Duration(
+                                                seconds:
+                                                2), // You can adjust the duration
+                                          ),
+                                        );
                                       }
                                     } catch (error) {
                                       // Handle any unexpected errors here.

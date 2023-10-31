@@ -15,6 +15,7 @@ class Profile extends StatefulWidget {
 
 class _ProfileState extends State<Profile> {
 
+
   void _logOut() async {
     await SharedPreferencesUtil.clearUserId();
 
@@ -28,6 +29,21 @@ class _ProfileState extends State<Profile> {
   Widget build(BuildContext context) {
     return Container(
       child: Scaffold(
+        appBar: AppBar(
+          // leading:IconButton(onPressed: (){
+          //   Navigator.pop(context);
+          // }, icon: Icon(Icons.arrow_back)),
+          backgroundColor: Color(0xFF3C593B),
+
+          title: Text(
+            "My Profile",
+            style: GoogleFonts.lora(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+
+          shadowColor: Color(0xFF2F482D),
+        ),
         backgroundColor: Colors.lightGreen[50],
         body: Column(
           children: [

@@ -16,6 +16,7 @@ import 'package:plantbackend/screens/payment.dart';
 import 'package:plantbackend/screens/plants.dart';
 import 'package:plantbackend/screens/productDesc.dart';
 import 'package:plantbackend/screens/profile.dart';
+import 'package:plantbackend/screens/searchPageResult.dart';
 import 'package:plantbackend/screens/soil.dart';
 import 'package:plantbackend/screens/tabView.dart';
 import 'package:plantbackend/screens/tools.dart';
@@ -50,7 +51,7 @@ void main() async {
           '/fertilizers': (context) => Fertilizers(plantId: ""),
           '/soil': (context) => Soil(
               category: "All",
-              client: GraphQLClient(link: httpLink, cache: GraphQLCache())),
+              client: GraphQLClient(link: httpLink, cache: GraphQLCache()),userId: 0),
           //'/tools':(context)=>Tools(),
           'descpage': (context) => DescPage(),
           'wishlist': (context) => WishList(),
@@ -68,6 +69,7 @@ void main() async {
           'confirm': (context) => ConfirmOrder(),
           'profile': (context) => Profile(),
           'address': (context) => Address(),
+          'searchPageResult':(context)=>SearchResultsPage(List.empty())
         },
       ))));
 }

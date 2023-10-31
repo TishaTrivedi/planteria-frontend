@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:plantbackend/screens/bottomnavigate.dart';
 import 'package:plantbackend/screens/checkout.dart';
 import 'package:plantbackend/screens/confirmOrder.dart';
 import 'package:upi_india/upi_india.dart';
@@ -276,10 +277,33 @@ class _PaymentState extends State<Payment> {
                   ),
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => ConfirmOrder()));
+                      showDialog<String>(
+                        context: context,
+                        builder: (BuildContext context) => AlertDialog(
+
+                          content: Container(
+                            height: 300,
+                            width: 100,
+                            child: Column(
+                            children: [
+                              Image.asset("assets/cnf.png"),
+                              Text("Order confirmed",
+                                style: GoogleFonts.acme(
+                                  color: Colors.black,
+                                  fontSize: 20,
+                                  //fontFamily: 'Playfair Display',
+                                  fontWeight: FontWeight.w400,
+                                ),),
+                              TextButton(onPressed: (){
+                                Navigator.push(context, MaterialPageRoute(builder: (context)=>BottomNavigation()));
+                              },
+                                  child: Text("OK"))
+                            ],)
+                          ),
+                          
+                          
+                        )
+                      );
                     },
                     child: Column(
                       children: [

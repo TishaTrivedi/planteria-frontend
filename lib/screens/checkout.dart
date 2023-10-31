@@ -31,7 +31,8 @@ class _CheckoutState extends State<Checkout> {
 
   Future<void> createUser() async {
     final String createUserMutation = '''
-    mutation createCustomer(
+    mutation updateCustomer(
+    \$customerId: Int!
     \$fullName: String!
     \$address: String!
     \$city: String!
@@ -40,7 +41,8 @@ class _CheckoutState extends State<Checkout> {
     \$country: String!
     \$phone: String!
   ) {
-    createCustomer(
+    updateCustomer(
+      customerId: \$customerId
       fullName: \$fullName
       address: \$address
       city: \$city
@@ -64,6 +66,7 @@ class _CheckoutState extends State<Checkout> {
 
       ''';
     final Map<String, dynamic> variables = {
+      'customerId':1,
       'fullName': fullNameController.text,
       'address': addressController.text,
       'city': cityController.text,
