@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:graphql/client.dart';
 import 'package:plantbackend/graphql_client.dart';
 import 'package:plantbackend/login/registration.dart';
@@ -206,17 +207,16 @@ class _Login2State extends State<Login2> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Padding(
+                     Padding(
                       padding: EdgeInsets.only(
-                          left: 0, right: 0, top: 0, bottom: 30),
+                          left: 70, right: 0, top: 0, bottom: 30),
                       child: Text(
                         "Create Profile",
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 30,
-                          fontFamily: "Georgia",
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: GoogleFonts.playfairDisplay(
+                            fontSize: 26,
+                            color: Color(0xFF50694C),
+                            fontWeight: FontWeight.w600),
+                        textAlign: TextAlign.center,
                       ),
                     ),
                     // TextField(
@@ -383,16 +383,15 @@ class _Login2State extends State<Login2> {
                         },
                       ),
                     ),
-                    const Padding(
+                     Padding(
                       padding: EdgeInsets.only(
                           left: 0, right: 0, top: 0, bottom: 30),
                       child: Text(
                         "Must be at least eight characters",
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 15,
-                          fontFamily: "Georgia",
-                        ),
+                        style: GoogleFonts.playfairDisplay(
+                            fontSize: 15,
+                            color: Colors.black,
+                            fontWeight: FontWeight.w100),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -496,7 +495,7 @@ class _Login2State extends State<Login2> {
 
                     Padding(
                       padding: const EdgeInsets.only(
-                          left: 0, right: 0, top: 0, bottom: 30),
+                          left: 0, right: 0, top: 50, bottom: 20),
                       child: SizedBox(
                         height: 45,
                         width: width,
@@ -543,7 +542,7 @@ class _Login2State extends State<Login2> {
                             // Navigator.pushNamed(context, 'bottomnavigation');
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xFF2F482D),
+                            backgroundColor: Color(0xFF50694C),
                             shadowColor: Colors.transparent,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
@@ -552,14 +551,12 @@ class _Login2State extends State<Login2> {
                               ),
                             ),
                           ),
-                          child: const Text(
+                          child: Text(
                             'Login',
-                            style: TextStyle(
-                              fontFamily: 'Georgia',
-                              fontWeight: FontWeight.bold,
-                              fontSize: 17,
-                              color: Colors.white,
-                            ),
+                            style: GoogleFonts.playfairDisplay(
+                                fontSize: 26,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600)
                           ),
                         ),
                       ),

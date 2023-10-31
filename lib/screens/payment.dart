@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:graphql/client.dart';
+import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:plantbackend/graphql_client.dart';
 import 'package:plantbackend/screens/bottomnavigate.dart';
 import 'package:plantbackend/screens/checkout.dart';
 import 'package:plantbackend/screens/confirmOrder.dart';
@@ -34,9 +37,13 @@ class _PaymentState extends State<Payment> {
     fontWeight: FontWeight.w400,
     fontSize: 14,
   );
-
+  late GraphQLClient client;
   @override
   void initState() {
+    client = GraphQLClient(
+      link: httpLink,
+      cache: GraphQLCache(),
+    );
     _upiIndia.getAllUpiApps(mandatoryTransactionId: false).then((value) {
       setState(() {
         apps = value;
@@ -276,35 +283,100 @@ class _PaymentState extends State<Payment> {
                     ),
                   ),
                   child: ElevatedButton(
-                    onPressed: () {
-                      showDialog<String>(
-                        context: context,
-                        builder: (BuildContext context) => AlertDialog(
+                    // onPressed: () {
+                    //   showDialog<String>(
+                    //     context: context,
+                    //     builder: (BuildContext context) => AlertDialog(
+                    //
+                    //       content: Container(
+                    //         height: 300,
+                    //         width: 100,
+                    //         child: Column(
+                    //         children: [
+                    //           Image.asset("assets/cnf.png"),
+                    //           Text("Order confirmed",
+                    //             style: GoogleFonts.acme(
+                    //               color: Colors.black,
+                    //               fontSize: 20,
+                    //               //fontFamily: 'Playfair Display',
+                    //               fontWeight: FontWeight.w400,
+                    //             ),),
+                    //           TextButton(onPressed: (){
+                    //             Navigator.push(context, MaterialPageRoute(builder: (context)=>BottomNavigation()));
+                    //           },
+                    //               child: Text("OK"))
+                    //         ],)
+                    //       ),
+                    //
+                    //
+                    //     )
+                    //   );
+                    // },
+                    onPressed: () async {
+                      // retrieve total price
 
-                          content: Container(
-                            height: 300,
-                            width: 100,
-                            child: Column(
-                            children: [
-                              Image.asset("assets/cnf.png"),
-                              Text("Order confirmed",
-                                style: GoogleFonts.acme(
-                                  color: Colors.black,
-                                  fontSize: 20,
-                                  //fontFamily: 'Playfair Display',
-                                  fontWeight: FontWeight.w400,
-                                ),),
-                              TextButton(onPressed: (){
-                                Navigator.push(context, MaterialPageRoute(builder: (context)=>BottomNavigation()));
-                              },
-                                  child: Text("OK"))
-                            ],)
-                          ),
-                          
-                          
-                        )
+                      final MutationOptions options = MutationOptions(
+                        document: gql('''
+        mutation AddToOrder(\$cartId: ID!, \$customerId: ID!, \$price: Int!) {
+          addToOrder(cartId: \$cartId, customerId: \$customerId, price: \$price) {
+            order {
+              id
+            }
+          }
+        }
+      '''),
+                        variables: <String, dynamic>{
+                          'cartId': 10,
+                          'customerId':
+                              1, // Assuming customerId is static for this example
+                          'price': bagTotal,
+                        },
                       );
+
+                      QueryResult result = await client.mutate(options);
+
+                      if (result.hasException) {
+                        print('Error: ${result.exception.toString()}');
+                        // Handle errors if mutation fails
+                      } else {
+                        // Clear the cart if the order is successfully added
+                        // Assuming this function clears the cart
+
+                        // Show a confirmation dialog
+                        showDialog<String>(
+                            context: context,
+                            builder: (BuildContext context) => AlertDialog(
+                                  //
+                                  content: Container(
+                                      height: 300,
+                                      width: 100,
+                                      child: Column(
+                                        children: [
+                                          Image.asset("assets/cnf.png"),
+                                          Text(
+                                            "Order confirmed",
+                                            style: GoogleFonts.acme(
+                                              color: Colors.black,
+                                              fontSize: 20,
+                                              //fontFamily: 'Playfair Display',
+                                              fontWeight: FontWeight.w400,
+                                            ),
+                                          ),
+                                          TextButton(
+                                              onPressed: () {
+                                                Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            BottomNavigation()));
+                                              },
+                                              child: Text("OK"))
+                                        ],
+                                      )),
+                                ));
+                      }
                     },
+
                     child: Column(
                       children: [
                         Image.asset("assets/onBoard/cod.png", height: 150),

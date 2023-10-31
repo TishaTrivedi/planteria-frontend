@@ -58,4 +58,8 @@ class SharedPreferencesUtil {
     // Set the login state to false when clearing the user ID
     await setLoginState(false);
   }
+  Future<void> clearCart() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.remove('cartItems'); // Assuming 'cartItems' is the key for cart data
+  }
 }
